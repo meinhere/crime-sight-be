@@ -1,0 +1,12 @@
+PyPDF2
+python-dotenv
+requests
+pandas
+bs4
+google-genai
+supabase
+httpx
+fastapi
+uvicorn
+pydantic
+scikit-learn
