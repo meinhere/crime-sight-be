@@ -1,0 +1,307 @@
+openapi: 3.0.3
+info:
+  title: Crime Clustering Analysis API
+  description: API untuk analisis clustering kejahatan menggunakan algoritma KMeans
+  version: 1.0.0
+  contact:
+    name: Crime Analysis Team
+    email: support@crime-analysis.com
+
+servers:
+  - url: http://localhost:8000
+    description: FastAPI Development server
+  - url: https://your-python-api-domain.com
+    description: Production server
+
+paths:
+  /api/cluster:
+    get:
+      tags:
+        - Crime Clustering
+      summary: Get crime clustering analysis
+      description: |
+        Mendapatkan analisis clustering kejahatan menggunakan algoritma KMeans dengan 3 level klasifikasi:
+        - **Tinggi**: Wilayah dengan tingkat kejahatan tertinggi
+        - **Sedang**: Wilayah dengan tingkat kejahatan menengah  
+        - **Rendah**: Wilayah dengan tingkat kejahatan terendah
+
+        Clustering dilakukan berdasarkan jumlah kasus kejahatan per wilayah (kabupaten atau provinsi).
+      parameters:
+        - name: jenis_kejahatan
+          in: query
+          description: Filter berdasarkan jenis kejahatan spesifik
+          required: false
+          schema:
+            type: string
+            enum:
+              - Korupsi
+              - Pencurian
+              - Narkoba
+              - Penipuan
+              - Pembunuhan
+              - Pemerkosaan
+              - Penggelapan
+            example: Korupsi
+        - name: tahun
+          in: query
+          description: Filter berdasarkan tahun kejadian
+          required: false
+          schema:
+            type: integer
+            minimum: 2000
+            maximum: 2030
+            example: 2023
+        - name: provinsi
+          in: query
+          description: Filter berdasarkan kode provinsi (jika dipilih, akan menampilkan clustering per kabupaten dalam provinsi tersebut)
+          required: false
+          schema:
+            type: string
+            pattern: "^[0-9]{1,2}$"
+            example: "35"
+            description: Kode provinsi sesuai standar Indonesia (contoh 35 untuk Jawa Timur)
+      responses:
+        "200":
+          description: Successful clustering analysis
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ClusteringResponse"
+              examples:
+                clustering_by_province:
+                  summary: Clustering by province (no provinsi filter)
+                  description: Menampilkan clustering tingkat kejahatan per provinsi
+                  value:
+                    data:
+                      - name: "35"
+                        count: 145
+                        level: "Tinggi"
+                        normalized_count: 1.0
+                      - name: "32"
+                        count: 87
+                        level: "Sedang"
+                        normalized_count: 0.6
+                      - name: "33"
+                        count: 23
+                        level: "Rendah"
+                        normalized_count: 0.16
+                      - name: "34"
+                        count: 65
+                        level: "Sedang"
+                        normalized_count: 0.45
+                      - name: "31"
+                        count: 12
+                        level: "Rendah"
+                        normalized_count: 0.08
+                    meta:
+                      total_records: 332
+                      filters:
+                        jenis_kejahatan: null
+                        tahun: null
+                        provinsi: null
+                clustering_by_kabupaten:
+                  summary: Clustering by kabupaten (with provinsi filter)
+                  description: Menampilkan clustering tingkat kejahatan per kabupaten dalam provinsi Jawa Timur
+                  value:
+                    data:
+                      - name: "Surabaya"
+                        count: 45
+                        level: "Tinggi"
+                        normalized_count: 1.0
+                      - name: "Malang"
+                        count: 28
+                        level: "Sedang"
+                        normalized_count: 0.62
+                      - name: "Kediri"
+                        count: 15
+                        level: "Sedang"
+                        normalized_count: 0.33
+                      - name: "Pamekasan"
+                        count: 8
+                        level: "Rendah"
+                        normalized_count: 0.18
+                      - name: "Sumenep"
+                        count: 12
+                        level: "Rendah"
+                        normalized_count: 0.27
+                      - name: "Madiun"
+                        count: 22
+                        level: "Sedang"
+                        normalized_count: 0.49
+                    meta:
+                      total_records: 130
+                      filters:
+                        jenis_kejahatan: null
+                        tahun: null
+                        provinsi: "35"
+                specific_crime_type:
+                  summary: Clustering for specific crime type
+                  description: Clustering untuk jenis kejahatan Korupsi tahun 2023
+                  value:
+                    data:
+                      - name: "35"
+                        count: 56
+                        level: "Tinggi"
+                        normalized_count: 1.0
+                      - name: "32"
+                        count: 34
+                        level: "Sedang"
+                        normalized_count: 0.61
+                      - name: "33"
+                        count: 12
+                        level: "Rendah"
+                        normalized_count: 0.21
+                      - name: "34"
+                        count: 28
+                        level: "Sedang"
+                        normalized_count: 0.5
+                    meta:
+                      total_records: 130
+                      filters:
+                        jenis_kejahatan: "Korupsi"
+                        tahun: 2023
+                        provinsi: null
+        "404":
+          description: Data tidak ditemukan
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+                    example: "Data tidak ditemukan"
+        "422":
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        loc:
+                          type: array
+                          items:
+                            type: string
+                        msg:
+                          type: string
+                        type:
+                          type: string
+                example:
+                  detail:
+                    - loc: ["query", "tahun"]
+                      msg: "ensure this value is greater than or equal to 2000"
+                      type: "value_error.number.not_ge"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+                    example: "Internal server error occurred during clustering analysis"
+
+components:
+  schemas:
+    ClusteringResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/CrimeClusterItem"
+          description: Array hasil clustering dengan informasi level kejahatan per wilayah
+        meta:
+          type: object
+          items:
+            $ref: "#/components/schemas/ClusteringMeta"
+          description: Metadata tentang hasil clustering, termasuk total record dan filter yang diterapkan
+      required:
+        - data
+        - meta
+
+    CrimeClusterItem:
+      type: object
+      properties:
+        name:
+          type: string
+          description: Nama wilayah (nama kabupaten tiap provinsi di Indonesia)
+          example: "35"
+        count:
+          type: integer
+          description: Jumlah kasus kejahatan di wilayah tersebut
+          minimum: 0
+          example: 145
+        level:
+          type: string
+          enum: ["Tinggi", "Sedang", "Rendah"]
+          description: Level tingkat kejahatan berdasarkan hasil clustering
+          example: "Tinggi"
+        normalized_count:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+          description: Nilai normalisasi jumlah kasus (0-1) yang digunakan untuk clustering
+          example: 1.0
+      required:
+        - name
+        - count
+        - level
+        - normalized_count
+
+    ClusteringMeta:
+      type: object
+      properties:
+        total_records:
+          type: integer
+          description: Total jumlah record yang dianalisis
+          minimum: 0
+          example: 332
+        filters:
+          type: object
+          properties:
+            jenis_kejahatan:
+              type: string
+              nullable: true
+              description: Filter jenis kejahatan yang diterapkan
+              example: "Korupsi"
+            tahun:
+              type: integer
+              nullable: true
+              description: Filter tahun yang diterapkan
+              example: 2023
+            provinsi:
+              type: string
+              nullable: true
+              description: Filter kode provinsi yang diterapkan
+              example: "35"
+          required:
+            - jenis_kejahatan
+            - tahun
+            - provinsi
+      required:
+        - total_records
+        - filters
+
+tags:
+  - name: Crime Clustering
+    description: |
+      Endpoints untuk analisis clustering kejahatan menggunakan machine learning.
+
+      **Algoritma yang digunakan:**
+      - **KMeans Clustering** dengan 3 cluster (Tinggi, Sedang, Rendah)
+      - **MinMax Scaler** untuk normalisasi data
+
+      **Cara kerja:**
+      1. Data digroup berdasarkan wilayah (provinsi atau kabupaten)
+      2. Dihitung jumlah kasus per wilayah
+      3. Data dinormalisasi menggunakan MinMax Scaler
+      4. Dilakukan clustering menggunakan KMeans (k=3)
+      5. Cluster dipetakan ke level: Tinggi, Sedang, Rendah

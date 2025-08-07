@@ -1,15 +1,14 @@
 """
 API routers module.
 
-Contains FastAPI routers for different endpoints.
+Contains all FastAPI route handlers organized by functionality.
 """
 
 from .cluster_router import router as cluster_router
+from .search_router import router as search_router
 
-# Import other routers when they are implemented
-# from .find import router as find_router
-# from .scrap import router as scrap_router
-# from .summarize import router as summarize_router
-# from .trend import router as trend_router
+# Uncomment when implementing these routers
+# from .users_router import router as users_router
+# from .items_router import router as items_router
 
-__all__ = ["cluster_router"]
+__all__ = ["cluster_router", "search_router"]
