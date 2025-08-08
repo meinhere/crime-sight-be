@@ -1,0 +1,842 @@
+openapi: 3.0.3
+info:
+  title: Crime Sight Search API
+  description: |
+    Search API for Crime Sight application providing comprehensive court case search functionality.
+
+    ## Overview
+    This API provides powerful search capabilities across court case data including:
+    - Full-text search across case titles, summaries, and participant names
+    - Flexible pagination for handling large result sets
+    - Comprehensive case information retrieval
+
+    ## Search Capabilities
+    The search functionality covers:
+    - **Case Titles**: Main case descriptions and summaries
+    - **Participant Names**: Defendant names, prosecutor names, judges
+    - **Case Numbers**: Official court case identification numbers
+    - **Case Content**: Detailed case information and descriptions
+
+    ## Features
+    - Text-based search with keyword matching
+    - Pagination support for large datasets
+    - Structured response with case details
+    - Performance optimized for quick results
+
+    ## Base URL
+    `http://127.0.0.1:8000`
+  version: 1.0.0
+  contact:
+    name: Crime Sight API Support
+    email: support@crimesight.com
+
+servers:
+  - url: http://127.0.0.1:8000
+    description: Development server
+
+tags:
+  - name: search
+    description: Court case search operations
+
+paths:
+  /api/search:
+    get:
+      tags:
+        - search
+      summary: Search court cases
+      description: |
+        Search for court cases using plain text query with pagination support.
+
+        ## Search Functionality
+        The search engine performs full-text search across multiple fields:
+        - **Case Titles**: Primary case descriptions
+        - **Case Summaries**: Detailed case information
+        - **Defendant Names**: Names of accused individuals
+        - **Prosecutor Names**: Names of prosecuting attorneys
+        - **Case Numbers**: Official court case identifiers
+
+        ## Search Behavior
+        - **Keyword Matching**: Searches for exact and partial keyword matches
+        - **Multi-field Search**: Single query searches across all indexed fields
+        - **Case Insensitive**: Search is not case-sensitive
+        - **Relevance Ranking**: Results ordered by relevance when possible
+
+        ## Pagination
+        Use `limit` and `offset` parameters to paginate through large result sets:
+        - `limit`: Number of results per page (1-100)
+        - `offset`: Number of results to skip (for page navigation)
+
+        ## Use Cases
+        - Find cases by participant names
+        - Search for specific crime types or keywords
+        - Locate cases by case numbers
+        - Research legal precedents
+        - Investigate specific individuals or entities
+
+        ## Search Examples
+        - `korupsi` - Find corruption-related cases
+        - `Budi Santoso` - Find cases involving person named Budi Santoso
+        - `bantuan sosial` - Find social assistance related cases
+        - `2024` - Find cases from year 2024
+        - `Jakarta` - Find cases from Jakarta region
+      parameters:
+        - name: query
+          in: query
+          description: |
+            Text search query for searching across court case data.
+
+            **Search Fields:**
+            - Case titles and descriptions
+            - Defendant names
+            - Prosecutor names  
+            - Case numbers
+            - Case summaries
+
+            **Search Tips:**
+            - Use specific keywords for better results
+            - Multiple words will search for cases containing all terms
+            - Use names to find cases involving specific individuals
+            - Use crime types to find category-specific cases
+
+            **Examples:**
+            - `"korupsi bantuan sosial"` - Social assistance corruption cases
+            - `"Budi Santoso"` - Cases involving Budi Santoso
+            - `"2024"` - Cases from 2024
+            - `"Jakarta Pusat"` - Cases from Central Jakarta
+          required: false
+          schema:
+            type: string
+            minLength: 1
+            maxLength: 200
+          example: "korupsi bantuan sosial"
+
+        - name: limit
+          in: query
+          description: |
+            Maximum number of results to return per page.
+
+            **Range:** 1-100 results
+            **Default:** 50 results
+
+            **Usage:**
+            - Use smaller values (10-20) for quick previews
+            - Use larger values (50-100) for comprehensive results
+            - Consider performance impact with larger limits
+
+            **Examples:**
+            - `10` - Get first 10 results
+            - `50` - Get 50 results (default)
+            - `100` - Get maximum results per page
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+          example: 20
+
+        - name: offset
+          in: query
+          description: |
+            Number of results to skip for pagination.
+
+            **Minimum:** 0 (start from beginning)
+            **Default:** 0
+
+            **Pagination Formula:**
+            - Page 1: `offset=0`
+            - Page 2: `offset=limit`
+            - Page 3: `offset=limit*2`
+            - Page N: `offset=limit*(N-1)`
+
+            **Examples:**
+            - `0` - Start from first result
+            - `20` - Skip first 20 results (page 2 if limit=20)
+            - `100` - Skip first 100 results (page 3 if limit=50)
+          required: false
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+          example: 0
+
+      responses:
+        "200":
+          description: Successful search with court case results
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SearchCasesResponse"
+              examples:
+                successful_search:
+                  summary: Successful search with results
+                  description: Search for corruption cases with results found
+                  value:
+                    data:
+                      cases:
+                        - id: "case_001"
+                          nomor_putusan: "123/Pid.Sus-TPK/2024/PN.Jkt.Pst"
+                          jenis_kejahatan: "Tindak Pidana Korupsi"
+                          tahun: 2024
+                          judul_perkara: "Korupsi Dana Bantuan Sosial COVID-19"
+                          nama_terdakwa: "Budi Santoso"
+                          nama_jaksa: "Dr. Siti Nurhaliza, S.H., M.H."
+                          tanggal_putusan: "2024-03-15"
+                          kabupaten:
+                            nama_kabupaten: "Jakarta Pusat"
+                            kode_provinsi: "31"
+                            provinsi:
+                              nama_provinsi: "DKI JAKARTA"
+                          pengadilan:
+                            nama_pengadilan: "Pengadilan Negeri Jakarta Pusat"
+                            tingkat_pengadilan: "Pengadilan Negeri"
+                        - id: "case_002"
+                          nomor_putusan: "456/Pid.Sus-TPK/2024/PN.Bdg"
+                          jenis_kejahatan: "Tindak Pidana Korupsi"
+                          tahun: 2024
+                          judul_perkara: "Penyalahgunaan Dana Bantuan Sosial APBD"
+                          nama_terdakwa: "Ahmad Rahman"
+                          nama_jaksa: "Indira Putri, S.H."
+                          tanggal_putusan: "2024-02-28"
+                          kabupaten:
+                            nama_kabupaten: "Bandung"
+                            kode_provinsi: "32"
+                            provinsi:
+                              nama_provinsi: "JAWA BARAT"
+                          pengadilan:
+                            nama_pengadilan: "Pengadilan Negeri Bandung"
+                            tingkat_pengadilan: "Pengadilan Negeri"
+                    meta:
+                      total_results: 247
+                      showing: 2
+                      page: 1
+                      limit: 2
+                      offset: 0
+                      has_next: true
+                      query: "korupsi bantuan sosial"
+                      search_time_ms: 145
+
+                no_results:
+                  summary: Search with no results
+                  description: Search query that returns no matching cases
+                  value:
+                    data:
+                      cases: []
+                    meta:
+                      total_results: 0
+                      showing: 0
+                      page: 1
+                      limit: 50
+                      offset: 0
+                      has_next: false
+                      query: "kasus tidak ada"
+                      search_time_ms: 23
+
+                name_search:
+                  summary: Search by person name
+                  description: Search for cases involving specific person
+                  value:
+                    data:
+                      cases:
+                        - id: "case_003"
+                          nomor_putusan: "789/Pid.Sus-TPK/2023/PN.Sby"
+                          jenis_kejahatan: "Tindak Pidana Gratifikasi"
+                          tahun: 2023
+                          judul_perkara: "Gratifikasi Proyek Pembangunan Jalan"
+                          nama_terdakwa: "Budi Santoso"
+                          nama_jaksa: "Rahmat Hidayat, S.H., M.H."
+                          tanggal_putusan: "2023-11-20"
+                          kabupaten:
+                            nama_kabupaten: "Surabaya"
+                            kode_provinsi: "35"
+                            provinsi:
+                              nama_provinsi: "JAWA TIMUR"
+                          pengadilan:
+                            nama_pengadilan: "Pengadilan Negeri Surabaya"
+                            tingkat_pengadilan: "Pengadilan Negeri"
+                    meta:
+                      total_results: 1
+                      showing: 1
+                      page: 1
+                      limit: 50
+                      offset: 0
+                      has_next: false
+                      query: "Budi Santoso"
+                      search_time_ms: 67
+
+        "400":
+          description: Bad request - Invalid parameters
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                invalid_limit:
+                  summary: Invalid limit parameter
+                  value:
+                    message: "Invalid parameter"
+                    detail: "Limit must be between 1 and 100"
+                    timestamp: "2024-01-15T10:30:00Z"
+                    path: "/api/search"
+
+                invalid_offset:
+                  summary: Invalid offset parameter
+                  value:
+                    message: "Invalid parameter"
+                    detail: "Offset must be 0 or greater"
+                    timestamp: "2024-01-15T10:30:00Z"
+                    path: "/api/search"
+
+        "500":
+          description: Internal server error during search
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                search_error:
+                  summary: Search service error
+                  value:
+                    message: "Search error"
+                    detail: "Database connection timeout during search operation"
+                    timestamp: "2024-01-15T10:30:00Z"
+                    path: "/api/search"
+
+components:
+  schemas:
+    SearchCasesResponse:
+      type: object
+      required:
+        - data
+        - meta
+      properties:
+        data:
+          type: object
+          required:
+            - cases
+          properties:
+            cases:
+              type: array
+              description: Array of court cases matching the search criteria
+              items:
+                $ref: "#/components/schemas/CourtCase"
+        meta:
+          $ref: "#/components/schemas/SearchMeta"
+
+    CourtCase:
+      type: object
+      required:
+        - id
+        - nomor_putusan
+        - jenis_kejahatan
+        - tahun
+        - judul_perkara
+        - nama_terdakwa
+        - nama_jaksa
+        - tanggal_putusan
+        - kabupaten
+        - pengadilan
+      properties:
+        id:
+          type: string
+          description: Unique case identifier
+          example: "case_001"
+        nomor_putusan:
+          type: string
+          description: Official court case number
+          example: "123/Pid.Sus-TPK/2024/PN.Jkt.Pst"
+        jenis_kejahatan:
+          type: string
+          description: Type of crime/offense
+          example: "Tindak Pidana Korupsi"
+        tahun:
+          type: integer
+          description: Year of the case
+          minimum: 2000
+          maximum: 2030
+          example: 2024
+        judul_perkara:
+          type: string
+          description: Case title/summary
+          example: "Korupsi Dana Bantuan Sosial COVID-19"
+        nama_terdakwa:
+          type: string
+          description: Defendant name
+          example: "Budi Santoso"
+        nama_jaksa:
+          type: string
+          description: Prosecutor name
+          example: "Dr. Siti Nurhaliza, S.H., M.H."
+        tanggal_putusan:
+          type: string
+          format: date
+          description: Date of court decision (YYYY-MM-DD)
+          example: "2024-03-15"
+        kabupaten:
+          $ref: "#/components/schemas/KabupatenInfo"
+        pengadilan:
+          $ref: "#/components/schemas/PengadilanInfo"
+
+    KabupatenInfo:
+      type: object
+      required:
+        - nama_kabupaten
+        - kode_provinsi
+        - provinsi
+      properties:
+        nama_kabupaten:
+          type: string
+          description: District/city name where case occurred
+          example: "Jakarta Pusat"
+        kode_provinsi:
+          type: string
+          description: Province code
+          example: "31"
+        provinsi:
+          type: object
+          required:
+            - nama_provinsi
+          properties:
+            nama_provinsi:
+              type: string
+              description: Province name
+              example: "DKI JAKARTA"
+
+    PengadilanInfo:
+      type: object
+      required:
+        - nama_pengadilan
+        - tingkat_pengadilan
+      properties:
+        nama_pengadilan:
+          type: string
+          description: Court name
+          example: "Pengadilan Negeri Jakarta Pusat"
+        tingkat_pengadilan:
+          type: string
+          description: Court level/type
+          example: "Pengadilan Negeri"
+
+    SearchMeta:
+      type: object
+      required:
+        - total_results
+        - showing
+        - page
+        - limit
+        - offset
+        - has_next
+        - query
+        - search_time_ms
+      properties:
+        total_results:
+          type: integer
+          description: Total number of results found
+          minimum: 0
+          example: 247
+        showing:
+          type: integer
+          description: Number of results in current response
+          minimum: 0
+          example: 50
+        page:
+          type: integer
+          description: Current page number (calculated from offset and limit)
+          minimum: 1
+          example: 1
+        limit:
+          type: integer
+          description: Maximum results per page
+          minimum: 1
+          maximum: 100
+          example: 50
+        offset:
+          type: integer
+          description: Number of results skipped
+          minimum: 0
+          example: 0
+        has_next:
+          type: boolean
+          description: Whether there are more results available
+          example: true
+        query:
+          type: string
+          description: Search query used (null if no query provided)
+          nullable: true
+          example: "korupsi bantuan sosial"
+        search_time_ms:
+          type: integer
+          description: Search execution time in milliseconds
+          minimum: 0
+          example: 145
+
+    ErrorResponse:
+      type: object
+      required:
+        - message
+        - detail
+        - timestamp
+        - path
+      properties:
+        message:
+          type: string
+          description: Human-readable error message
+          example: "Invalid parameter"
+        detail:
+          type: string
+          description: Detailed technical error information
+          example: "Limit must be between 1 and 100"
+        timestamp:
+          type: string
+          format: date-time
+          description: When the error occurred (ISO 8601 format)
+          example: "2024-01-15T10:30:00Z"
+        path:
+          type: string
+          description: API endpoint that generated the error
+          example: "/api/search"
+
+externalDocs:
+  description: Crime Sight Search Documentation
+  url: https://docs.crimesight.com/search
+
+x-code-samples:
+  - lang: curl
+    label: Basic search
+    source: |
+      curl -X GET "http://127.0.0.1:8000/api/search?query=korupsi" \
+           -H "Content-Type: application/json"
+
+  - lang: curl
+    label: Search with pagination
+    source: |
+      curl -X GET "http://127.0.0.1:8000/api/search?query=bantuan%20sosial&limit=20&offset=0" \
+           -H "Content-Type: application/json"
+
+  - lang: curl
+    label: Search by person name
+    source: |
+      curl -X GET "http://127.0.0.1:8000/api/search?query=Budi%20Santoso&limit=10" \
+           -H "Content-Type: application/json"
+
+  - lang: python
+    label: Python requests - Basic search
+    source: |
+      import requests
+
+      url = "http://127.0.0.1:8000/api/search"
+      params = {
+          'query': 'korupsi bantuan sosial',
+          'limit': 20,
+          'offset': 0
+      }
+
+      response = requests.get(url, params=params)
+
+      if response.status_code == 200:
+          data = response.json()
+          
+          print("=== Search Results ===")
+          print(f"Query: '{data['meta']['query']}'")
+          print(f"Total Results: {data['meta']['total_results']}")
+          print(f"Showing: {data['meta']['showing']} results")
+          print(f"Search Time: {data['meta']['search_time_ms']}ms")
+          
+          print(f"\n=== Cases ===")
+          for i, case in enumerate(data['data']['cases'], 1):
+              print(f"{i}. {case['judul_perkara']}")
+              print(f"   Case No: {case['nomor_putusan']}")
+              print(f"   Defendant: {case['nama_terdakwa']}")
+              print(f"   Crime Type: {case['jenis_kejahatan']}")
+              print(f"   Location: {case['kabupaten']['nama_kabupaten']}, {case['kabupaten']['provinsi']['nama_provinsi']}")
+              print(f"   Date: {case['tanggal_putusan']}")
+              print()
+          
+          # Check if there are more results
+          if data['meta']['has_next']:
+              print(f"More results available. Use offset={data['meta']['offset'] + data['meta']['limit']} for next page.")
+      else:
+          error = response.json()
+          print(f"Error: {error['message']} - {error['detail']}")
+
+  - lang: python
+    label: Python requests - Paginated search
+    source: |
+      import requests
+
+      def search_all_pages(query, page_size=20):
+          url = "http://127.0.0.1:8000/api/search"
+          all_cases = []
+          offset = 0
+          
+          while True:
+              params = {
+                  'query': query,
+                  'limit': page_size,
+                  'offset': offset
+              }
+              
+              response = requests.get(url, params=params)
+              
+              if response.status_code != 200:
+                  raise Exception(f"Search failed: {response.json()['detail']}")
+              
+              data = response.json()
+              cases = data['data']['cases']
+              
+              if not cases:  # No more results
+                  break
+              
+              all_cases.extend(cases)
+              print(f"Retrieved page {data['meta']['page']}: {len(cases)} cases")
+              
+              if not data['meta']['has_next']:
+                  break
+              
+              offset += page_size
+          
+          return all_cases
+
+      # Example usage
+      try:
+          all_corruption_cases = search_all_pages('korupsi', page_size=50)
+          
+          print(f"\n=== Complete Search Results ===")
+          print(f"Total cases retrieved: {len(all_corruption_cases)}")
+          
+          # Analyze results
+          defendants = set(case['nama_terdakwa'] for case in all_corruption_cases)
+          locations = set(case['kabupaten']['nama_kabupaten'] for case in all_corruption_cases)
+          
+          print(f"Unique defendants: {len(defendants)}")
+          print(f"Affected locations: {len(locations)}")
+          
+      except Exception as e:
+          print(f"Error: {e}")
+
+  - lang: javascript
+    label: JavaScript fetch - Search with UI
+    source: |
+      class CaseSearcher {
+          constructor(baseUrl = 'http://127.0.0.1:8000/api/search') {
+              this.baseUrl = baseUrl;
+          }
+          
+          async search(query, options = {}) {
+              const params = new URLSearchParams();
+              
+              if (query) params.append('query', query);
+              if (options.limit) params.append('limit', options.limit);
+              if (options.offset) params.append('offset', options.offset);
+              
+              const url = `${this.baseUrl}?${params}`;
+              
+              try {
+                  const response = await fetch(url);
+                  
+                  if (!response.ok) {
+                      const error = await response.json();
+                      throw new Error(`${error.message}: ${error.detail}`);
+                  }
+                  
+                  return await response.json();
+                  
+              } catch (error) {
+                  console.error('Search error:', error.message);
+                  throw error;
+              }
+          }
+          
+          async searchByName(name, limit = 20) {
+              return this.search(name, { limit });
+          }
+          
+          async searchByKeyword(keyword, limit = 50) {
+              return this.search(keyword, { limit });
+          }
+          
+          formatSearchResults(data) {
+              const results = {
+                  summary: {
+                      query: data.meta.query,
+                      totalResults: data.meta.total_results,
+                      showing: data.meta.showing,
+                      searchTime: data.meta.search_time_ms
+                  },
+                  cases: data.data.cases.map(case => ({
+                      id: case.id,
+                      title: case.judul_perkara,
+                      defendant: case.nama_terdakwa,
+                      caseNumber: case.nomor_putusan,
+                      crimeType: case.jenis_kejahatan,
+                      location: `${case.kabupaten.nama_kabupaten}, ${case.kabupaten.provinsi.nama_provinsi}`,
+                      date: case.tanggal_putusan,
+                      court: case.pengadilan.nama_pengadilan
+                  })),
+                  pagination: {
+                      currentPage: data.meta.page,
+                      hasNext: data.meta.has_next,
+                      limit: data.meta.limit,
+                      offset: data.meta.offset
+                  }
+              };
+              
+              return results;
+          }
+      }
+
+      // Usage example
+      const searcher = new CaseSearcher();
+
+      // Search for corruption cases
+      searcher.search('korupsi bantuan sosial', { limit: 10 })
+          .then(data => {
+              const formatted = searcher.formatSearchResults(data);
+              
+              console.log(`Found ${formatted.summary.totalResults} cases for "${formatted.summary.query}"`);
+              console.log(`Search completed in ${formatted.summary.searchTime}ms`);
+              
+              formatted.cases.forEach((case, index) => {
+                  console.log(`${index + 1}. ${case.title}`);
+                  console.log(`   Defendant: ${case.defendant}`);
+                  console.log(`   Location: ${case.location}`);
+                  console.log(`   Date: ${case.date}`);
+              });
+              
+              if (formatted.pagination.hasNext) {
+                  console.log('More results available...');
+              }
+          })
+          .catch(error => {
+              console.error('Search failed:', error);
+          });
+
+  - lang: javascript
+    label: JavaScript fetch - Advanced search interface
+    source: |
+      class AdvancedSearchInterface {
+          constructor(containerId) {
+              this.container = document.getElementById(containerId);
+              this.searcher = new CaseSearcher();
+              this.currentResults = null;
+              this.setupInterface();
+          }
+          
+          setupInterface() {
+              this.container.innerHTML = `
+                  <div class="search-interface">
+                      <div class="search-form">
+                          <input type="text" id="search-query" placeholder="Search cases..." />
+                          <select id="search-limit">
+                              <option value="10">10 results</option>
+                              <option value="20">20 results</option>
+                              <option value="50">50 results</option>
+                          </select>
+                          <button id="search-btn">Search</button>
+                      </div>
+                      <div id="search-results"></div>
+                      <div id="pagination"></div>
+                  </div>
+              `;
+              
+              this.bindEvents();
+          }
+          
+          bindEvents() {
+              const searchBtn = this.container.querySelector('#search-btn');
+              const queryInput = this.container.querySelector('#search-query');
+              
+              searchBtn.addEventListener('click', () => this.performSearch());
+              queryInput.addEventListener('keypress', (e) => {
+                  if (e.key === 'Enter') this.performSearch();
+              });
+          }
+          
+          async performSearch(offset = 0) {
+              const query = this.container.querySelector('#search-query').value;
+              const limit = parseInt(this.container.querySelector('#search-limit').value);
+              
+              if (!query.trim()) {
+                  alert('Please enter a search query');
+                  return;
+              }
+              
+              try {
+                  this.showLoading();
+                  const data = await this.searcher.search(query, { limit, offset });
+                  this.displayResults(data);
+              } catch (error) {
+                  this.showError(error.message);
+              }
+          }
+          
+          displayResults(data) {
+              const resultsDiv = this.container.querySelector('#search-results');
+              const formatted = this.searcher.formatSearchResults(data);
+              
+              let html = `
+                  <div class="search-summary">
+                      <h3>Search Results</h3>
+                      <p>Found ${formatted.summary.totalResults} cases for "${formatted.summary.query}"</p>
+                      <p>Showing ${formatted.summary.showing} results (${formatted.summary.searchTime}ms)</p>
+                  </div>
+                  <div class="cases-list">
+              `;
+              
+              formatted.cases.forEach((case, index) => {
+                  html += `
+                      <div class="case-item">
+                          <h4>${case.title}</h4>
+                          <p><strong>Case Number:</strong> ${case.caseNumber}</p>
+                          <p><strong>Defendant:</strong> ${case.defendant}</p>
+                          <p><strong>Crime Type:</strong> ${case.crimeType}</p>
+                          <p><strong>Location:</strong> ${case.location}</p>
+                          <p><strong>Date:</strong> ${case.date}</p>
+                          <p><strong>Court:</strong> ${case.court}</p>
+                      </div>
+                  `;
+              });
+              
+              html += '</div>';
+              resultsDiv.innerHTML = html;
+              
+              this.setupPagination(formatted.pagination, data.meta);
+          }
+          
+          setupPagination(pagination, meta) {
+              const paginationDiv = this.container.querySelector('#pagination');
+              
+              if (!pagination.hasNext && pagination.currentPage === 1) {
+                  paginationDiv.innerHTML = '';
+                  return;
+              }
+              
+              let html = '<div class="pagination">';
+              
+              if (pagination.offset > 0) {
+                  html += `<button onclick="this.performSearch(${pagination.offset - pagination.limit})">Previous</button>`;
+              }
+              
+              html += `<span>Page ${pagination.currentPage}</span>`;
+              
+              if (pagination.hasNext) {
+                  html += `<button onclick="this.performSearch(${pagination.offset + pagination.limit})">Next</button>`;
+              }
+              
+              html += '</div>';
+              paginationDiv.innerHTML = html;
+          }
+          
+          showLoading() {
+              const resultsDiv = this.container.querySelector('#search-results');
+              resultsDiv.innerHTML = '<p>Searching...</p>';
+          }
+          
+          showError(message) {
+              const resultsDiv = this.container.querySelector('#search-results');
+              resultsDiv.innerHTML = `<p class="error">Error: ${message}</p>`;
+          }
+      }
+
+      // Initialize search interface
+      // const searchInterface = new AdvancedSearchInterface('search-container');

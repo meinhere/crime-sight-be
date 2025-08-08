@@ -1,11 +1,8 @@
 from fastapi import APIRouter
 from typing import Optional
 from fastapi import Query, HTTPException
-from ..db.database import supabase
+from ..responses.search_response import  SearchCasesResponse
 from ..services.search_service import search_cases
-from ..responses.search_response import (
-    SearchCasesResponse,
-)
 
 router = APIRouter(prefix="/api", tags=["cluster"])
 @router.get("/search", response_model=SearchCasesResponse)

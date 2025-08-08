@@ -1,0 +1,797 @@
+openapi: 3.0.3
+info:
+  title: Crime Sight Master Data API
+  description: |
+    Master data API for Crime Sight application providing reference data for filters and lookups.
+
+    ## Overview
+    These endpoints provide essential reference data used throughout the Crime Sight application:
+    - **Years**: Available years in the crime database
+    - **Crime Types**: List of all crime categories  
+    - **Provinces**: Indonesian provinces with crime data
+
+    ## Usage
+    Master data endpoints are typically called:
+    - During application initialization
+    - To populate dropdown filters
+    - For data validation
+    - For building dynamic queries
+
+    ## Data Source
+    All data is extracted from the crime database and represents actual available values,
+    ensuring filters will return results when used in other APIs.
+
+    ## Base URL
+    `http://127.0.0.1:8000`
+  version: 1.0.0
+  contact:
+    name: Crime Sight API Support
+    email: support@crimesight.com
+
+servers:
+  - url: http://127.0.0.1:8000
+    description: Development server
+
+tags:
+  - name: master-data
+    description: Reference data for filters and lookups
+
+paths:
+  /api/master/tahun:
+    get:
+      tags:
+        - master-data
+      summary: Get available years
+      description: |
+        Retrieve a list of all available years from the crime database.
+
+        ## Purpose
+        - Populate year filter dropdowns
+        - Validate year parameters in other APIs
+        - Determine data coverage timeline
+
+        ## Data Source
+        Years are extracted from the `putusan` table's `tahun` column,
+        returning only unique values that actually exist in the database.
+
+        ## Response Format
+        Returns an object containing a "data" array of integers representing years 
+        in descending order (most recent first).
+
+        ## Use Cases
+        - Frontend filter initialization
+        - Date range validation
+        - Timeline analysis preparation
+        - Data availability checking
+      parameters: []
+      responses:
+        "200":
+          description: Object containing list of available years in descending order
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TahunResponse"
+              examples:
+                typical_years:
+                  summary: Typical years response
+                  description: Common range of years with crime data
+                  value:
+                    data:
+                      [
+                        2024,
+                        2023,
+                        2022,
+                        2021,
+                        2020,
+                        2019,
+                        2018,
+                        2017,
+                        2016,
+                        2015,
+                      ]
+
+                limited_data:
+                  summary: Limited data range
+                  description: Smaller dataset with fewer years
+                  value:
+                    data: [2023, 2022, 2021]
+
+                extensive_data:
+                  summary: Extensive historical data
+                  description: Long-term historical crime data
+                  value:
+                    data:
+                      [
+                        2024,
+                        2023,
+                        2022,
+                        2021,
+                        2020,
+                        2019,
+                        2018,
+                        2017,
+                        2016,
+                        2015,
+                        2014,
+                        2013,
+                        2012,
+                        2011,
+                        2010,
+                      ]
+
+        "500":
+          description: Server error retrieving years data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                database_error:
+                  summary: Database connection error
+                  value:
+                    message: "Database error"
+                    detail: "Failed to retrieve years from database"
+                    timestamp: "2024-01-15T10:30:00Z"
+                    path: "/api/master/tahun"
+
+  /api/master/jenis-kejahatan:
+    get:
+      tags:
+        - master-data
+      summary: Get crime types
+      description: |
+        Retrieve a list of all unique crime types from the crime database.
+
+        ## Purpose
+        - Populate crime type filter dropdowns
+        - Validate crime type parameters in other APIs
+        - Understand crime categorization
+
+        ## Data Source
+        Crime types are extracted from the `putusan` table's `jenis_kejahatan` column,
+        returning only unique values that actually exist in the database.
+
+        ## Response Format
+        Returns an object containing a "data" array of strings representing 
+        crime types in alphabetical order.
+
+        ## Common Crime Types
+        The database typically contains these main categories:
+        - **Tindak Pidana Korupsi** - Corruption crimes
+        - **Tindak Pidana Narkotika** - Drug-related crimes  
+        - **Tindak Pidana Pencucian Uang** - Money laundering
+        - **Tindak Pidana Terorisme** - Terrorism crimes
+        - **Tindak Pidana Gratifikasi** - Gratification crimes
+
+        ## Use Cases
+        - Crime type filter initialization
+        - Category analysis preparation
+        - Data validation for clustering
+        - Statistical analysis setup
+      parameters: []
+      responses:
+        "200":
+          description: Object containing list of unique crime types in alphabetical order
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/JenisKejahatanResponse"
+              examples:
+                typical_crimes:
+                  summary: Common crime types
+                  description: Standard set of crime categories
+                  value:
+                    data:
+                      - "Tindak Pidana Gratifikasi"
+                      - "Tindak Pidana Korupsi"
+                      - "Tindak Pidana Narkotika"
+                      - "Tindak Pidana Pencucian Uang"
+                      - "Tindak Pidana Terorisme"
+
+                extensive_crimes:
+                  summary: Extended crime types
+                  description: Comprehensive list including specialized crimes
+                  value:
+                    data:
+                      - "Tindak Pidana Gratifikasi"
+                      - "Tindak Pidana Kehutanan"
+                      - "Tindak Pidana Korupsi"
+                      - "Tindak Pidana Lingkungan Hidup"
+                      - "Tindak Pidana Narkotika"
+                      - "Tindak Pidana Pencucian Uang"
+                      - "Tindak Pidana Perbankan"
+                      - "Tindak Pidana Terorisme"
+
+                minimal_crimes:
+                  summary: Limited crime types
+                  description: Smaller dataset with basic categories
+                  value:
+                    data:
+                      - "Tindak Pidana Korupsi"
+                      - "Tindak Pidana Narkotika"
+
+        "500":
+          description: Server error retrieving crime types data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                database_error:
+                  summary: Database connection error
+                  value:
+                    message: "Database error"
+                    detail: "Failed to retrieve crime types from database"
+                    timestamp: "2024-01-15T10:30:00Z"
+                    path: "/api/master/jenis-kejahatan"
+
+  /api/master/provinsi:
+    get:
+      tags:
+        - master-data
+      summary: Get provinces
+      description: |
+        Retrieve a list of all unique Indonesian provinces from the crime database.
+
+        ## Purpose
+        - Populate province filter dropdowns
+        - Validate province parameters in other APIs
+        - Geographic analysis preparation
+
+        ## Data Source
+        Provinces are extracted from the related `provinsi` table through the `kabupaten`
+        relationship, returning only provinces that have associated crime data.
+
+        ## Response Format
+        Returns an object containing a "data" array of province objects with 
+        kode_provinsi and nama_provinsi, sorted alphabetically by province name.
+
+        ## Indonesian Provinces
+        The database contains official Indonesian province names such as:
+        - **DKI JAKARTA** - Jakarta Special Capital Region
+        - **JAWA BARAT** - West Java Province
+        - **JAWA TENGAH** - Central Java Province  
+        - **JAWA TIMUR** - East Java Province
+        - **SUMATERA UTARA** - North Sumatra Province
+
+        ## Use Cases
+        - Geographic filter initialization
+        - Regional analysis preparation
+        - Province-based clustering
+        - Geographic data validation
+      parameters: []
+      responses:
+        "200":
+          description: Object containing list of unique provinces with codes and names
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProvinsiResponse"
+              examples:
+                major_provinces:
+                  summary: Major provinces with crime data
+                  description: Common provinces that typically have significant crime data
+                  value:
+                    data:
+                      - kode_provinsi: "51"
+                        nama_provinsi: "BALI"
+                      - kode_provinsi: "36"
+                        nama_provinsi: "BANTEN"
+                      - kode_provinsi: "34"
+                        nama_provinsi: "DI YOGYAKARTA"
+                      - kode_provinsi: "31"
+                        nama_provinsi: "DKI JAKARTA"
+                      - kode_provinsi: "32"
+                        nama_provinsi: "JAWA BARAT"
+                      - kode_provinsi: "33"
+                        nama_provinsi: "JAWA TENGAH"
+                      - kode_provinsi: "35"
+                        nama_provinsi: "JAWA TIMUR"
+                      - kode_provinsi: "64"
+                        nama_provinsi: "KALIMANTAN TIMUR"
+                      - kode_provinsi: "12"
+                        nama_provinsi: "SUMATERA UTARA"
+
+                comprehensive_provinces:
+                  summary: Comprehensive province list
+                  description: Extensive list covering most Indonesian provinces
+                  value:
+                    data:
+                      - kode_provinsi: "11"
+                        nama_provinsi: "ACEH"
+                      - kode_provinsi: "51"
+                        nama_provinsi: "BALI"
+                      - kode_provinsi: "19"
+                        nama_provinsi: "BANGKA BELITUNG"
+                      - kode_provinsi: "36"
+                        nama_provinsi: "BANTEN"
+                      - kode_provinsi: "17"
+                        nama_provinsi: "BENGKULU"
+                      - kode_provinsi: "34"
+                        nama_provinsi: "DI YOGYAKARTA"
+                      - kode_provinsi: "31"
+                        nama_provinsi: "DKI JAKARTA"
+                      - kode_provinsi: "75"
+                        nama_provinsi: "GORONTALO"
+                      - kode_provinsi: "15"
+                        nama_provinsi: "JAMBI"
+                      - kode_provinsi: "32"
+                        nama_provinsi: "JAWA BARAT"
+                      - kode_provinsi: "33"
+                        nama_provinsi: "JAWA TENGAH"
+                      - kode_provinsi: "35"
+                        nama_provinsi: "JAWA TIMUR"
+
+                limited_provinces:
+                  summary: Limited geographic coverage
+                  description: Smaller dataset with fewer provinces
+                  value:
+                    data:
+                      - kode_provinsi: "31"
+                        nama_provinsi: "DKI JAKARTA"
+                      - kode_provinsi: "32"
+                        nama_provinsi: "JAWA BARAT"
+                      - kode_provinsi: "33"
+                        nama_provinsi: "JAWA TENGAH"
+
+        "500":
+          description: Server error retrieving provinces data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                database_error:
+                  summary: Database connection error
+                  value:
+                    message: "Database error"
+                    detail: "Failed to retrieve provinces from database"
+                    timestamp: "2024-01-15T10:30:00Z"
+                    path: "/api/master/provinsi"
+
+components:
+  schemas:
+    TahunResponse:
+      type: object
+      required:
+        - data
+      properties:
+        data:
+          type: array
+          items:
+            type: integer
+            minimum: 2000
+            maximum: 2030
+          description: Array of years with crime data in descending order
+      example:
+        data: [2024, 2023, 2022, 2021, 2020]
+
+    JenisKejahatanResponse:
+      type: object
+      required:
+        - data
+      properties:
+        data:
+          type: array
+          items:
+            type: string
+            minLength: 1
+          description: Array of crime type names in alphabetical order
+      example:
+        data:
+          [
+            "Tindak Pidana Gratifikasi",
+            "Tindak Pidana Korupsi",
+            "Tindak Pidana Narkotika",
+            "Tindak Pidana Pencucian Uang",
+            "Tindak Pidana Terorisme",
+          ]
+
+    ProvinsiData:
+      type: object
+      required:
+        - kode_provinsi
+        - nama_provinsi
+      properties:
+        kode_provinsi:
+          type: string
+          description: Province code
+          example: "31"
+        nama_provinsi:
+          type: string
+          description: Province name
+          example: "DKI JAKARTA"
+
+    ProvinsiResponse:
+      type: object
+      required:
+        - data
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/ProvinsiData"
+          description: Array of province objects sorted alphabetically by name
+      example:
+        data:
+          [
+            { "kode_provinsi": "31", "nama_provinsi": "DKI JAKARTA" },
+            { "kode_provinsi": "32", "nama_provinsi": "JAWA BARAT" },
+          ]
+
+    ErrorResponse:
+      type: object
+      required:
+        - message
+        - detail
+        - timestamp
+        - path
+      properties:
+        message:
+          type: string
+          description: Human-readable error message
+          example: "Database error"
+        detail:
+          type: string
+          description: Detailed technical error information
+          example: "Failed to retrieve data from database"
+        timestamp:
+          type: string
+          format: date-time
+          description: When the error occurred (ISO 8601 format)
+          example: "2024-01-15T10:30:00Z"
+        path:
+          type: string
+          description: API endpoint that generated the error
+          example: "/api/master/tahun"
+
+externalDocs:
+  description: Crime Sight Master Data Documentation
+  url: https://docs.crimesight.com/master-data
+
+x-code-samples:
+  - lang: curl
+    label: Get available years
+    source: |
+      curl -X GET "http://127.0.0.1:8000/api/master/tahun" \
+           -H "Content-Type: application/json"
+
+  - lang: curl
+    label: Get crime types
+    source: |
+      curl -X GET "http://127.0.0.1:8000/api/master/jenis-kejahatan" \
+           -H "Content-Type: application/json"
+
+  - lang: curl
+    label: Get provinces
+    source: |
+      curl -X GET "http://127.0.0.1:8000/api/master/provinsi" \
+           -H "Content-Type: application/json"
+
+  - lang: python
+    label: Python requests - Get all master data
+    source: |
+      import requests
+
+      base_url = "http://127.0.0.1:8000/api/master"
+
+      # Get all master data
+      endpoints = ['tahun', 'jenis-kejahatan', 'provinsi']
+      master_data = {}
+
+      for endpoint in endpoints:
+          try:
+              response = requests.get(f"{base_url}/{endpoint}")
+              response.raise_for_status()
+              
+              # Extract data from response object
+              response_json = response.json()
+              master_data[endpoint] = response_json['data']
+              print(f"✓ {endpoint}: {len(master_data[endpoint])} items")
+              
+          except requests.exceptions.RequestException as e:
+              print(f"✗ Error fetching {endpoint}: {e}")
+
+      # Display results
+      print("\n=== Master Data Summary ===")
+      if 'tahun' in master_data:
+          years = master_data['tahun']
+          print(f"Years: {min(years)} - {max(years)} ({len(years)} years)")
+
+      if 'jenis-kejahatan' in master_data:
+          crimes = master_data['jenis-kejahatan']
+          print(f"Crime Types: {len(crimes)} categories")
+          print(f"Examples: {', '.join(crimes[:3])}...")
+
+      if 'provinsi' in master_data:
+          provinces = master_data['provinsi']
+          print(f"Provinces: {len(provinces)} regions")
+          # Extract province names for display
+          province_names = [p['nama_provinsi'] for p in provinces[:3]]
+          print(f"Examples: {', '.join(province_names)}...")
+
+  - lang: python
+    label: Python requests - Build filter options
+    source: |
+      import requests
+      from typing import Dict, List
+
+      class MasterDataService:
+          def __init__(self, base_url: str = "http://127.0.0.1:8000"):
+              self.base_url = f"{base_url}/api/master"
+          
+          def get_years(self) -> List[int]:
+              """Get available years for filtering"""
+              response = requests.get(f"{self.base_url}/tahun")
+              response.raise_for_status()
+              return response.json()['data']
+          
+          def get_crime_types(self) -> List[str]:
+              """Get available crime types for filtering"""
+              response = requests.get(f"{self.base_url}/jenis-kejahatan")
+              response.raise_for_status()
+              return response.json()['data']
+          
+          def get_provinces(self) -> List[dict]:
+              """Get available provinces for filtering"""
+              response = requests.get(f"{self.base_url}/provinsi")
+              response.raise_for_status()
+              return response.json()['data']
+          
+          def get_all_filters(self) -> Dict:
+              """Get all master data for building filters"""
+              return {
+                  'years': self.get_years(),
+                  'crime_types': self.get_crime_types(),
+                  'provinces': self.get_provinces()
+              }
+
+      # Usage example
+      try:
+          service = MasterDataService()
+          filters = service.get_all_filters()
+          
+          print("Filter Options Available:")
+          print(f"📅 Years: {len(filters['years'])} options")
+          print(f"🚨 Crime Types: {len(filters['crime_types'])} options")
+          print(f"🗺️  Provinces: {len(filters['provinces'])} options")
+          
+          # Build UI-ready filter data
+          filter_options = {
+              'year_options': [{'value': year, 'label': str(year)} for year in filters['years']],
+              'crime_type_options': [{'value': crime, 'label': crime} for crime in filters['crime_types']],
+              'province_options': [{'value': p['kode_provinsi'], 'label': p['nama_provinsi']} for p in filters['provinces']]
+          }
+          
+          print(f"\nReady for UI: {sum(len(opts) for opts in filter_options.values())} total options")
+          
+      except Exception as e:
+          print(f"Error: {e}")
+
+  - lang: javascript
+    label: JavaScript fetch - Get master data
+    source: |
+      async function getMasterData() {
+          const baseUrl = 'http://127.0.0.1:8000/api/master';
+          const endpoints = ['tahun', 'jenis-kejahatan', 'provinsi'];
+          
+          try {
+              // Fetch all master data concurrently
+              const promises = endpoints.map(endpoint => 
+                  fetch(`${baseUrl}/${endpoint}`).then(res => {
+                      if (!res.ok) throw new Error(`Failed to fetch ${endpoint}`);
+                      return res.json();
+                  })
+              );
+              
+              const [yearResponse, crimeTypeResponse, provinceResponse] = await Promise.all(promises);
+              
+              return {
+                  years: yearResponse.data,
+                  crimeTypes: crimeTypeResponse.data,
+                  provinces: provinceResponse.data
+              };
+              
+          } catch (error) {
+              console.error('Error fetching master data:', error);
+              throw error;
+          }
+      }
+
+      // Usage example
+      getMasterData().then(data => {
+          console.log('Master Data Loaded:');
+          console.log(`Years: ${data.years.length} (${Math.min(...data.years)}-${Math.max(...data.years)})`);
+          console.log(`Crime Types: ${data.crimeTypes.length}`);
+          console.log(`Provinces: ${data.provinces.length}`);
+          
+          // Example: Build select options for provinces
+          const provinceOptions = data.provinces.map(province => 
+              `<option value="${province.kode_provinsi}">${province.nama_provinsi}</option>`
+          ).join('');
+          
+          console.log('Province dropdown options ready:', provinceOptions.length, 'characters');
+      }).catch(error => {
+          console.error('Failed to load master data:', error);
+      });
+
+  - lang: javascript
+    label: JavaScript fetch - Build dynamic filters
+    source: |
+      class FilterBuilder {
+          constructor(baseUrl = 'http://127.0.0.1:8000/api/master') {
+              this.baseUrl = baseUrl;
+              this.cache = {};
+          }
+          
+          async fetchWithCache(endpoint) {
+              if (this.cache[endpoint]) {
+                  return this.cache[endpoint];
+              }
+              
+              const response = await fetch(`${this.baseUrl}/${endpoint}`);
+              if (!response.ok) {
+                  throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+              }
+              
+              const responseData = await response.json();
+              this.cache[endpoint] = responseData.data;
+              return responseData.data;
+          }
+          
+          async buildYearFilter(selectId) {
+              try {
+                  const years = await this.fetchWithCache('tahun');
+                  const select = document.getElementById(selectId);
+                  
+                  if (!select) throw new Error(`Element ${selectId} not found`);
+                  
+                  select.innerHTML = '<option value="">All Years</option>';
+                  years.forEach(year => {
+                      const option = document.createElement('option');
+                      option.value = year;
+                      option.textContent = year;
+                      select.appendChild(option);
+                  });
+                  
+                  console.log(`✓ Year filter built: ${years.length} options`);
+              } catch (error) {
+                  console.error('Failed to build year filter:', error);
+              }
+          }
+          
+          async buildCrimeTypeFilter(selectId) {
+              try {
+                  const crimeTypes = await this.fetchWithCache('jenis-kejahatan');
+                  const select = document.getElementById(selectId);
+                  
+                  if (!select) throw new Error(`Element ${selectId} not found`);
+                  
+                  select.innerHTML = '<option value="">All Crime Types</option>';
+                  crimeTypes.forEach(crime => {
+                      const option = document.createElement('option');
+                      option.value = crime;
+                      option.textContent = crime;
+                      select.appendChild(option);
+                  });
+                  
+                  console.log(`✓ Crime type filter built: ${crimeTypes.length} options`);
+              } catch (error) {
+                  console.error('Failed to build crime type filter:', error);
+              }
+          }
+          
+          async buildProvinceFilter(selectId) {
+              try {
+                  const provinces = await this.fetchWithCache('provinsi');
+                  const select = document.getElementById(selectId);
+                  
+                  if (!select) throw new Error(`Element ${selectId} not found`);
+                  
+                  select.innerHTML = '<option value="">All Provinces</option>';
+                  provinces.forEach(province => {
+                      const option = document.createElement('option');
+                      option.value = province.kode_provinsi;
+                      option.textContent = province.nama_provinsi;
+                      select.appendChild(option);
+                  });
+                  
+                  console.log(`✓ Province filter built: ${provinces.length} options`);
+              } catch (error) {
+                  console.error('Failed to build province filter:', error);
+              }
+          }
+          
+          async buildAllFilters(filterIds) {
+              const { yearId, crimeTypeId, provinceId } = filterIds;
+              
+              await Promise.all([
+                  this.buildYearFilter(yearId),
+                  this.buildCrimeTypeFilter(crimeTypeId),
+                  this.buildProvinceFilter(provinceId)
+              ]);
+              
+              console.log('✓ All filters built successfully');
+          }
+      }
+
+      // Usage example
+      const filterBuilder = new FilterBuilder();
+
+      // Build all filters when page loads
+      filterBuilder.buildAllFilters({
+          yearId: 'year-select',
+          crimeTypeId: 'crime-type-select', 
+          provinceId: 'province-select'
+      });
+
+x-tags:
+  - name: master-data
+    description: |
+      ## Master Data Endpoints
+
+      These endpoints provide reference data that powers the Crime Sight application's filtering and analysis capabilities.
+
+      ### Data Characteristics
+      - **Always Current**: Data reflects what's actually in the database
+      - **No Parameters**: Simple GET requests with no query parameters
+      - **Wrapped Response**: All endpoints return objects with a "data" property containing the actual arrays
+      - **Sorted Results**: Data returned in logical order (years descending, names alphabetical)
+      - **Fast Response**: Optimized for quick UI population
+
+      ### Response Structure
+      All master data endpoints return responses in this format:
+      ```json
+      {
+        "data": [...]  // The actual array of data
+      }
+      ```
+
+      ### Common Usage Patterns
+
+      #### Frontend Initialization
+      ```javascript
+      // Load all filter options on app startup
+      Promise.all([
+        fetch('/api/master/tahun'),
+        fetch('/api/master/jenis-kejahatan'), 
+        fetch('/api/master/provinsi')
+      ]).then(responses => {
+        return Promise.all(responses.map(r => r.json()));
+      }).then(([yearData, crimeData, provinceData]) => {
+        // Extract data arrays
+        const years = yearData.data;
+        const crimes = crimeData.data;
+        const provinces = provinceData.data;
+        // Build UI filters
+      });
+      ```
+
+      #### Validation
+      ```python
+      # Validate user input against available options
+      year_response = requests.get('/api/master/tahun').json()
+      available_years = year_response['data']
+      if user_year not in available_years:
+          raise ValueError("Invalid year")
+      ```
+
+      #### Province Data Usage
+      ```javascript
+      // Province data includes both code and name
+      provinces.data.forEach(province => {
+        console.log(`${province.kode_provinsi}: ${province.nama_provinsi}`);
+      });
+      ```
+
+      ### Performance Tips
+      - Cache responses for 5-10 minutes
+      - Load master data once during app initialization
+      - Use for client-side validation before API calls
+      - Extract 'data' property from responses
+
+      ### Integration with Other APIs
+      These master data values are used as parameters in:
+      - `/api/cluster` - For filtering crime data before clustering
+      - `/api/trends` - For temporal and geographic analysis
+      - `/api/search` - For building search queries

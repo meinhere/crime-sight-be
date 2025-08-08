@@ -1,9 +1,10 @@
 from fastapi import APIRouter, HTTPException
 from ..db.database import supabase
+from ..responses.master_response import ProvinsiResponse, JenisKejahatanResponse, TahunResponse
 
 router = APIRouter(prefix="/api/master", tags=["master-data"])
 
-@router.get("/jenis-kejahatan")
+@router.get("/jenis-kejahatan", response_model=JenisKejahatanResponse)
 async def get_jenis_kejahatan():
     """
     Get list of unique crime types (jenis kejahatan) from putusan table.
@@ -29,12 +30,14 @@ async def get_jenis_kejahatan():
                 crime_types.add(crime_type.strip())
         
         # Convert to sorted list
-        return sorted(list(crime_types))
+        return {
+            "data": sorted(list(crime_types))
+        }
         
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error retrieving crime types: {str(e)}")
 
-@router.get("/provinsi")
+@router.get("/provinsi", response_model=ProvinsiResponse)
 async def get_provinsi():
     """
     Get list of unique provinces from putusan table.
@@ -69,12 +72,14 @@ async def get_provinsi():
                   provinces_dict[kode] = {'kode_provinsi': kode, 'nama_provinsi': nama}
         
         # Convert to sorted list by nama_provinsi
-        return sorted(list(provinces_dict.values()), key=lambda x: x['nama_provinsi'])
+        return {
+            "data": sorted(list(provinces_dict.values()), key=lambda x: x['nama_provinsi'])
+        }
         
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error retrieving provinces: {str(e)}")
 
-@router.get("/tahun")
+@router.get("/tahun", response_model=TahunResponse)
 async def get_available_years():
     """
     Get list of available years from putusan table.
@@ -99,7 +104,9 @@ async def get_available_years():
                 years.add(year)
         
         # Convert to sorted list (descending)
-        return sorted(list(years), reverse=True)
+        return {
+            "data": sorted(list(years), reverse=True)
+        }
         
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error retrieving years: {str(e)}")

@@ -1,307 +1,731 @@
 openapi: 3.0.3
 info:
-  title: Crime Clustering Analysis API
-  description: API untuk analisis clustering kejahatan menggunakan algoritma KMeans
+  title: Crime Sight Cluster API
+  description: |
+    Crime data clustering API using K-means algorithm for geographic crime analysis.
+
+    ## Overview
+    This API performs K-means clustering analysis on crime data to identify:
+    - Geographic crime hotspots
+    - Crime pattern clusters by region
+    - Statistical analysis of crime distribution
+
+    ## K-means Clustering
+    The API uses K-means algorithm to group crimes into clusters based on:
+    - Geographic proximity (kabupaten level)
+    - Crime frequency and density
+    - Temporal and categorical patterns
+
+    K-means is ideal for:
+    - Finding geographic hotspots with similar cluster sizes
+    - Identifying regional crime patterns
+    - Creating balanced crime distribution analysis
+
+    ## Base URL
+    `http://127.0.0.1:8000`
   version: 1.0.0
   contact:
-    name: Crime Analysis Team
-    email: support@crime-analysis.com
+    name: Crime Sight API Support
+    email: support@crimesight.com
 
 servers:
-  - url: http://localhost:8000
-    description: FastAPI Development server
-  - url: https://your-python-api-domain.com
-    description: Production server
+  - url: http://127.0.0.1:8000
+    description: Development server
+
+tags:
+  - name: cluster
+    description: K-means crime data clustering operations
 
 paths:
   /api/cluster:
     get:
       tags:
-        - Crime Clustering
-      summary: Get crime clustering analysis
+        - cluster
+      summary: Perform K-means clustering on crime data
       description: |
-        Mendapatkan analisis clustering kejahatan menggunakan algoritma KMeans dengan 3 level klasifikasi:
-        - **Tinggi**: Wilayah dengan tingkat kejahatan tertinggi
-        - **Sedang**: Wilayah dengan tingkat kejahatan menengah  
-        - **Rendah**: Wilayah dengan tingkat kejahatan terendah
+        Analyze crime data using K-means clustering algorithm to identify geographic patterns and hotspots.
 
-        Clustering dilakukan berdasarkan jumlah kasus kejahatan per wilayah (kabupaten atau provinsi).
+        ## How it Works
+        1. **Data Filtering**: Apply optional filters for crime type, year, and province
+        2. **Geographic Grouping**: Group crimes by kabupaten (district/city)
+        3. **K-means Analysis**: Apply clustering algorithm to identify hotspots
+        4. **Results**: Return clusters with geographic centers and crime statistics
+
+        ## Clustering Process
+        - Groups crimes by kabupaten to create geographic clusters
+        - Uses crime frequency and geographic proximity
+        - Generates cluster centers representing crime hotspots
+        - Provides statistical analysis of cluster quality
+
+        ## Quality Metrics
+        - **Silhouette Score**: Measures how well-separated clusters are (-1 to 1, higher is better)
+        - **Inertia**: Sum of squared distances to cluster centers (lower indicates tighter clusters)
+        - **Cluster Distribution**: Number of cases in each cluster for balance analysis
+
+        ## Use Cases
+        - Identify crime hotspots in specific provinces
+        - Analyze temporal crime patterns by filtering years
+        - Focus on specific crime types for targeted analysis
+        - Geographic resource allocation for law enforcement
+
       parameters:
         - name: jenis_kejahatan
           in: query
-          description: Filter berdasarkan jenis kejahatan spesifik
+          description: |
+            Filter crimes by specific type for targeted analysis.
+
+            **Common Crime Types:**
+            - "Pembunuhan" - Murders
+            - "Pencurian" - Theft and burglary
+            - "Pengancaman" - Threats and intimidation
+
+            **Usage:**
+            - Leave empty to analyze all crime types
+            - Specify exact crime type name for focused analysis
           required: false
           schema:
             type: string
-            enum:
-              - Korupsi
-              - Pencurian
-              - Narkoba
-              - Penipuan
-              - Pembunuhan
-              - Pemerkosaan
-              - Penggelapan
-            example: Korupsi
+          example: "Pencurian"
+
         - name: tahun
           in: query
-          description: Filter berdasarkan tahun kejadian
+          description: |
+            Filter crimes by specific year for temporal analysis.
+
+            **Range:** 2000-2030
+
+            **Usage:**
+            - Leave empty to analyze all available years
+            - Specify year for annual crime pattern analysis
+            - Useful for comparing different time periods
+
+            **Examples:**
+            - `2023` - Analyze only 2023 cases
+            - `2022` - Focus on 2022 crime patterns
           required: false
           schema:
             type: integer
             minimum: 2000
             maximum: 2030
-            example: 2023
+          example: 2023
+
         - name: provinsi
           in: query
-          description: Filter berdasarkan kode provinsi (jika dipilih, akan menampilkan clustering per kabupaten dalam provinsi tersebut)
+          description: |
+            Filter crimes by province name for regional analysis.
+
+            **Province Examples:**
+            - "32" - West Java Province Code
+            - "34" - Central Java Province Code
+            - "35" - East Java Province Code
+
+            **Usage:**
+            - Leave empty to analyze all provinces
+            - Specify exact province name for regional focus
+            - Use for provincial crime pattern analysis
           required: false
           schema:
             type: string
-            pattern: "^[0-9]{1,2}$"
-            example: "35"
-            description: Kode provinsi sesuai standar Indonesia (contoh 35 untuk Jawa Timur)
+          example: "35"
+
       responses:
         "200":
-          description: Successful clustering analysis
+          description: Successful K-means clustering analysis
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ClusteringResponse"
+                $ref: "#/components/schemas/ClusterResponse"
               examples:
-                clustering_by_province:
-                  summary: Clustering by province (no provinsi filter)
-                  description: Menampilkan clustering tingkat kejahatan per provinsi
+                jakarta_corruption:
+                  summary: Jakarta corruption cases clustering
+                  description: K-means analysis of corruption cases in Jakarta for 2023
                   value:
                     data:
-                      - name: "35"
-                        count: 145
-                        level: "Tinggi"
-                        normalized_count: 1.0
-                      - name: "32"
-                        count: 87
-                        level: "Sedang"
-                        normalized_count: 0.6
-                      - name: "33"
-                        count: 23
-                        level: "Rendah"
-                        normalized_count: 0.16
-                      - name: "34"
-                        count: 65
-                        level: "Sedang"
-                        normalized_count: 0.45
-                      - name: "31"
-                        count: 12
-                        level: "Rendah"
-                        normalized_count: 0.08
+                      clusters:
+                        - cluster_id: 0
+                          center:
+                            lat: -6.2088
+                            lng: 106.8456
+                          members: 45
+                          crime_types: ["Tindak Pidana Korupsi"]
+                          locations: ["Jakarta Pusat", "Jakarta Selatan"]
+                          cases:
+                            - id: "case_001"
+                              jenis_kejahatan: "Tindak Pidana Korupsi"
+                              tahun: 2023
+                              kabupaten:
+                                nama_kabupaten: "Jakarta Pusat"
+                                kode_provinsi: "31"
+                        - cluster_id: 1
+                          center:
+                            lat: -6.1751
+                            lng: 106.8650
+                          members: 32
+                          crime_types: ["Tindak Pidana Korupsi"]
+                          locations: ["Jakarta Utara", "Jakarta Timur"]
+                          cases:
+                            - id: "case_002"
+                              jenis_kejahatan: "Tindak Pidana Korupsi"
+                              tahun: 2023
+                              kabupaten:
+                                nama_kabupaten: "Jakarta Utara"
+                                kode_provinsi: "31"
+                        - cluster_id: 2
+                          center:
+                            lat: -6.2615
+                            lng: 106.7811
+                          members: 28
+                          crime_types: ["Tindak Pidana Korupsi"]
+                          locations: ["Jakarta Barat"]
+                          cases:
+                            - id: "case_003"
+                              jenis_kejahatan: "Tindak Pidana Korupsi"
+                              tahun: 2023
+                              kabupaten:
+                                nama_kabupaten: "Jakarta Barat"
+                                kode_provinsi: "31"
+                      statistics:
+                        total_cases: 105
+                        total_clusters: 3
+                        silhouette_score: 0.78
+                        inertia: 892.3
+                        cluster_distribution: [45, 32, 28]
                     meta:
-                      total_records: 332
+                      algorithm: "kmeans"
+                      parameters:
+                        n_clusters: 3
+                      filters:
+                        jenis_kejahatan: "Tindak Pidana Korupsi"
+                        tahun: 2023
+                        provinsi: "DKI JAKARTA"
+                      processing_time_ms: 156
+
+                all_crimes_2023:
+                  summary: All crime types in 2023
+                  description: Clustering analysis of all crime types across all provinces for 2023
+                  value:
+                    data:
+                      clusters:
+                        - cluster_id: 0
+                          center:
+                            lat: -6.2088
+                            lng: 106.8456
+                          members: 89
+                          crime_types:
+                            [
+                              "Tindak Pidana Korupsi",
+                              "Tindak Pidana Pencucian Uang",
+                            ]
+                          locations:
+                            ["Jakarta Pusat", "Jakarta Selatan", "Tangerang"]
+                        - cluster_id: 1
+                          center:
+                            lat: -7.2575
+                            lng: 112.7521
+                          members: 67
+                          crime_types:
+                            ["Tindak Pidana Narkotika", "Tindak Pidana Korupsi"]
+                          locations: ["Surabaya", "Malang", "Sidoarjo"]
+                        - cluster_id: 2
+                          center:
+                            lat: -6.9034
+                            lng: 107.6181
+                          members: 54
+                          crime_types: ["Tindak Pidana Narkotika"]
+                          locations: ["Bandung", "Bekasi", "Bogor"]
+                        - cluster_id: 3
+                          center:
+                            lat: -7.7956
+                            lng: 110.3695
+                          members: 41
+                          crime_types: ["Tindak Pidana Korupsi"]
+                          locations: ["Yogyakarta", "Solo", "Semarang"]
+                        - cluster_id: 4
+                          center:
+                            lat: 3.5952
+                            lng: 98.6722
+                          members: 23
+                          crime_types:
+                            [
+                              "Tindak Pidana Terorisme",
+                              "Tindak Pidana Narkotika",
+                            ]
+                          locations: ["Medan", "Binjai", "Deli Serdang"]
+                      statistics:
+                        total_cases: 274
+                        total_clusters: 5
+                        silhouette_score: 0.85
+                        inertia: 2456.7
+                        cluster_distribution: [89, 67, 54, 41, 23]
+                    meta:
+                      algorithm: "kmeans"
+                      parameters:
+                        n_clusters: 5
                       filters:
                         jenis_kejahatan: null
-                        tahun: null
-                        provinsi: null
-                clustering_by_kabupaten:
-                  summary: Clustering by kabupaten (with provinsi filter)
-                  description: Menampilkan clustering tingkat kejahatan per kabupaten dalam provinsi Jawa Timur
-                  value:
-                    data:
-                      - name: "Surabaya"
-                        count: 45
-                        level: "Tinggi"
-                        normalized_count: 1.0
-                      - name: "Malang"
-                        count: 28
-                        level: "Sedang"
-                        normalized_count: 0.62
-                      - name: "Kediri"
-                        count: 15
-                        level: "Sedang"
-                        normalized_count: 0.33
-                      - name: "Pamekasan"
-                        count: 8
-                        level: "Rendah"
-                        normalized_count: 0.18
-                      - name: "Sumenep"
-                        count: 12
-                        level: "Rendah"
-                        normalized_count: 0.27
-                      - name: "Madiun"
-                        count: 22
-                        level: "Sedang"
-                        normalized_count: 0.49
-                    meta:
-                      total_records: 130
-                      filters:
-                        jenis_kejahatan: null
-                        tahun: null
-                        provinsi: "35"
-                specific_crime_type:
-                  summary: Clustering for specific crime type
-                  description: Clustering untuk jenis kejahatan Korupsi tahun 2023
-                  value:
-                    data:
-                      - name: "35"
-                        count: 56
-                        level: "Tinggi"
-                        normalized_count: 1.0
-                      - name: "32"
-                        count: 34
-                        level: "Sedang"
-                        normalized_count: 0.61
-                      - name: "33"
-                        count: 12
-                        level: "Rendah"
-                        normalized_count: 0.21
-                      - name: "34"
-                        count: 28
-                        level: "Sedang"
-                        normalized_count: 0.5
-                    meta:
-                      total_records: 130
-                      filters:
-                        jenis_kejahatan: "Korupsi"
                         tahun: 2023
                         provinsi: null
+                      processing_time_ms: 342
+
+        "400":
+          description: Bad request - Invalid parameters
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                invalid_year:
+                  summary: Invalid year parameter
+                  value:
+                    message: "Invalid parameter"
+                    detail: "Year must be between 2000 and 2030"
+                    timestamp: "2024-01-15T10:30:00Z"
+                    path: "/api/cluster"
+
         "404":
-          description: Data tidak ditemukan
+          description: No data found for the given filters
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  detail:
-                    type: string
-                    example: "Data tidak ditemukan"
-        "422":
-          description: Validation error
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  detail:
-                    type: array
-                    items:
-                      type: object
-                      properties:
-                        loc:
-                          type: array
-                          items:
-                            type: string
-                        msg:
-                          type: string
-                        type:
-                          type: string
-                example:
-                  detail:
-                    - loc: ["query", "tahun"]
-                      msg: "ensure this value is greater than or equal to 2000"
-                      type: "value_error.number.not_ge"
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                no_data:
+                  summary: No crime data found
+                  value:
+                    message: "No data found"
+                    detail: "No crime cases match the specified filters"
+                    timestamp: "2024-01-15T10:30:00Z"
+                    path: "/api/cluster"
+
         "500":
-          description: Internal server error
+          description: Internal server error during clustering
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  detail:
-                    type: string
-                    example: "Internal server error occurred during clustering analysis"
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                clustering_error:
+                  summary: K-means algorithm failed
+                  value:
+                    message: "Clustering analysis failed"
+                    detail: "K-means algorithm failed to converge"
+                    timestamp: "2024-01-15T10:30:00Z"
+                    path: "/api/cluster"
 
 components:
   schemas:
-    ClusteringResponse:
+    ClusterResponse:
       type: object
-      properties:
-        data:
-          type: array
-          items:
-            $ref: "#/components/schemas/CrimeClusterItem"
-          description: Array hasil clustering dengan informasi level kejahatan per wilayah
-        meta:
-          type: object
-          items:
-            $ref: "#/components/schemas/ClusteringMeta"
-          description: Metadata tentang hasil clustering, termasuk total record dan filter yang diterapkan
       required:
         - data
         - meta
-
-    CrimeClusterItem:
-      type: object
       properties:
-        name:
-          type: string
-          description: Nama wilayah (nama kabupaten tiap provinsi di Indonesia)
-          example: "35"
-        count:
-          type: integer
-          description: Jumlah kasus kejahatan di wilayah tersebut
-          minimum: 0
-          example: 145
-        level:
-          type: string
-          enum: ["Tinggi", "Sedang", "Rendah"]
-          description: Level tingkat kejahatan berdasarkan hasil clustering
-          example: "Tinggi"
-        normalized_count:
-          type: number
-          format: float
-          minimum: 0
-          maximum: 1
-          description: Nilai normalisasi jumlah kasus (0-1) yang digunakan untuk clustering
-          example: 1.0
+        data:
+          type: object
+          required:
+            - clusters
+            - statistics
+          properties:
+            clusters:
+              type: array
+              description: Array of clusters generated by K-means algorithm
+              items:
+                $ref: "#/components/schemas/Cluster"
+            statistics:
+              $ref: "#/components/schemas/ClusterStatistics"
+        meta:
+          $ref: "#/components/schemas/ClusterMeta"
+
+    Cluster:
+      type: object
       required:
-        - name
-        - count
-        - level
-        - normalized_count
-
-    ClusteringMeta:
-      type: object
+        - cluster_id
+        - center
+        - members
+        - crime_types
+        - locations
+        - cases
       properties:
-        total_records:
+        cluster_id:
           type: integer
-          description: Total jumlah record yang dianalisis
+          description: Unique cluster identifier (0-based)
           minimum: 0
-          example: 332
+          example: 0
+        center:
+          $ref: "#/components/schemas/GeoPoint"
+        members:
+          type: integer
+          description: Number of crime cases in this cluster
+          minimum: 0
+          example: 45
+        crime_types:
+          type: array
+          description: Unique crime types found in this cluster
+          items:
+            type: string
+          example: ["Tindak Pidana Korupsi", "Tindak Pidana Pencucian Uang"]
+        locations:
+          type: array
+          description: Kabupaten (districts/cities) included in this cluster
+          items:
+            type: string
+          example: ["Jakarta Pusat", "Jakarta Selatan"]
+        cases:
+          type: array
+          description: Crime cases assigned to this cluster
+          items:
+            $ref: "#/components/schemas/CrimeCase"
+
+    GeoPoint:
+      type: object
+      required:
+        - lat
+        - lng
+      properties:
+        lat:
+          type: number
+          format: double
+          description: Latitude coordinate of cluster center (WGS84)
+          minimum: -90
+          maximum: 90
+          example: -6.2088
+        lng:
+          type: number
+          format: double
+          description: Longitude coordinate of cluster center (WGS84)
+          minimum: -180
+          maximum: 180
+          example: 106.8456
+
+    ClusterStatistics:
+      type: object
+      required:
+        - total_cases
+        - total_clusters
+        - silhouette_score
+        - inertia
+        - cluster_distribution
+      properties:
+        total_cases:
+          type: integer
+          description: Total number of crime cases analyzed
+          minimum: 0
+          example: 150
+        total_clusters:
+          type: integer
+          description: Number of clusters generated by K-means
+          minimum: 1
+          example: 5
+        silhouette_score:
+          type: number
+          format: double
+          description: |
+            Clustering quality score (-1 to 1).
+            - Values closer to 1: Well-separated clusters
+            - Values around 0: Overlapping clusters
+            - Negative values: Poor clustering
+          minimum: -1
+          maximum: 1
+          example: 0.75
+        inertia:
+          type: number
+          format: double
+          description: |
+            Sum of squared distances from each point to its cluster center.
+            Lower values indicate tighter, more compact clusters.
+          minimum: 0
+          example: 1250.5
+        cluster_distribution:
+          type: array
+          description: Number of cases in each cluster (for balance analysis)
+          items:
+            type: integer
+            minimum: 0
+          example: [45, 32, 28, 25, 20]
+
+    ClusterMeta:
+      type: object
+      required:
+        - algorithm
+        - parameters
+        - filters
+        - processing_time_ms
+      properties:
+        algorithm:
+          type: string
+          enum: [kmeans]
+          description: Clustering algorithm used (always K-means)
+          example: "kmeans"
+        parameters:
+          type: object
+          required:
+            - n_clusters
+          description: K-means algorithm parameters
+          properties:
+            n_clusters:
+              type: integer
+              description: Number of clusters automatically determined based on data
+              minimum: 1
+              example: 5
         filters:
           type: object
+          description: Filters applied to the crime data
           properties:
             jenis_kejahatan:
               type: string
               nullable: true
-              description: Filter jenis kejahatan yang diterapkan
-              example: "Korupsi"
+              description: Crime type filter applied (null if not filtered)
+              example: "Tindak Pidana Korupsi"
             tahun:
               type: integer
               nullable: true
-              description: Filter tahun yang diterapkan
+              description: Year filter applied (null if not filtered)
               example: 2023
             provinsi:
               type: string
               nullable: true
-              description: Filter kode provinsi yang diterapkan
-              example: "35"
-          required:
-            - jenis_kejahatan
-            - tahun
-            - provinsi
+              description: Province filter applied (null if not filtered)
+              example: "DKI JAKARTA"
+        processing_time_ms:
+          type: integer
+          description: Processing time in milliseconds
+          minimum: 0
+          example: 245
+
+    CrimeCase:
+      type: object
       required:
-        - total_records
-        - filters
+        - id
+        - jenis_kejahatan
+        - tahun
+        - kabupaten
+      properties:
+        id:
+          type: string
+          description: Unique case identifier
+          example: "case_001"
+        jenis_kejahatan:
+          type: string
+          description: Type of crime committed
+          example: "Tindak Pidana Korupsi"
+        tahun:
+          type: integer
+          description: Year when the crime occurred
+          minimum: 2000
+          maximum: 2030
+          example: 2023
+        kabupaten:
+          type: object
+          required:
+            - nama_kabupaten
+            - kode_provinsi
+          description: District/city information where crime occurred
+          properties:
+            nama_kabupaten:
+              type: string
+              description: District/city name
+              example: "Jakarta Pusat"
+            kode_provinsi:
+              type: string
+              description: Province code
+              example: "31"
+            provinsi:
+              type: object
+              properties:
+                nama_provinsi:
+                  type: string
+                  description: Province name
+                  example: "DKI JAKARTA"
 
-tags:
-  - name: Crime Clustering
-    description: |
-      Endpoints untuk analisis clustering kejahatan menggunakan machine learning.
+    ErrorResponse:
+      type: object
+      required:
+        - message
+        - detail
+        - timestamp
+        - path
+      properties:
+        message:
+          type: string
+          description: Human-readable error message
+          example: "Invalid parameter"
+        detail:
+          type: string
+          description: Detailed technical error information
+          example: "Year must be between 2000 and 2030"
+        timestamp:
+          type: string
+          format: date-time
+          description: When the error occurred (ISO 8601 format)
+          example: "2024-01-15T10:30:00Z"
+        path:
+          type: string
+          description: API endpoint that generated the error
+          example: "/api/cluster"
 
-      **Algoritma yang digunakan:**
-      - **KMeans Clustering** dengan 3 cluster (Tinggi, Sedang, Rendah)
-      - **MinMax Scaler** untuk normalisasi data
+externalDocs:
+  description: Crime Sight K-means Clustering Documentation
+  url: https://docs.crimesight.com/clustering
 
-      **Cara kerja:**
-      1. Data digroup berdasarkan wilayah (provinsi atau kabupaten)
-      2. Dihitung jumlah kasus per wilayah
-      3. Data dinormalisasi menggunakan MinMax Scaler
-      4. Dilakukan clustering menggunakan KMeans (k=3)
-      5. Cluster dipetakan ke level: Tinggi, Sedang, Rendah
+x-code-samples:
+  - lang: curl
+    label: Basic clustering - all data
+    source: |
+      curl -X GET "http://127.0.0.1:8000/api/cluster" \
+           -H "Content-Type: application/json"
+
+  - lang: curl
+    label: Filter by crime type
+    source: |
+      curl -X GET "http://127.0.0.1:8000/api/cluster?jenis_kejahatan=Tindak%20Pidana%20Korupsi" \
+           -H "Content-Type: application/json"
+
+  - lang: curl
+    label: Filter by year and province
+    source: |
+      curl -X GET "http://127.0.0.1:8000/api/cluster?tahun=2023&provinsi=DKI%20JAKARTA" \
+           -H "Content-Type: application/json"
+
+  - lang: curl
+    label: All filters combined
+    source: |
+      curl -X GET "http://127.0.0.1:8000/api/cluster?jenis_kejahatan=Tindak%20Pidana%20Narkotika&tahun=2023&provinsi=JAWA%20BARAT" \
+           -H "Content-Type: application/json"
+
+  - lang: python
+    label: Python requests - Basic clustering
+    source: |
+      import requests
+      import json
+
+      url = "http://127.0.0.1:8000/api/cluster"
+
+      response = requests.get(url)
+
+      if response.status_code == 200:
+          data = response.json()
+          print(f"Found {len(data['data']['clusters'])} clusters")
+          print(f"Total cases: {data['data']['statistics']['total_cases']}")
+          print(f"Quality score: {data['data']['statistics']['silhouette_score']:.3f}")
+          
+          for i, cluster in enumerate(data['data']['clusters']):
+              print(f"Cluster {i}: {cluster['members']} cases")
+              print(f"  Center: ({cluster['center']['lat']:.4f}, {cluster['center']['lng']:.4f})")
+              print(f"  Locations: {', '.join(cluster['locations'])}")
+      else:
+          error = response.json()
+          print(f"Error: {error['message']} - {error['detail']}")
+
+  - lang: python
+    label: Python requests - Filtered analysis
+    source: |
+      import requests
+
+      def analyze_crime_clusters(crime_type=None, year=None, province=None):
+          url = "http://127.0.0.1:8000/api/cluster"
+          params = {}
+          
+          if crime_type:
+              params['jenis_kejahatan'] = crime_type
+          if year:
+              params['tahun'] = year
+          if province:
+              params['provinsi'] = province
+          
+          response = requests.get(url, params=params)
+          
+          if response.status_code == 200:
+              return response.json()
+          else:
+              raise Exception(f"API Error: {response.json()['detail']}")
+
+      # Example usage
+      try:
+          result = analyze_crime_clusters(
+              crime_type="Tindak Pidana Korupsi",
+              year=2023,
+              province="DKI JAKARTA"
+          )
+          
+          print(f"Analysis completed in {result['meta']['processing_time_ms']}ms")
+          print(f"Found {result['data']['statistics']['total_clusters']} clusters")
+          
+      except Exception as e:
+          print(f"Error: {e}")
+
+  - lang: javascript
+    label: JavaScript fetch - Basic usage
+    source: |
+      async function getCrimeClusters(filters = {}) {
+          const params = new URLSearchParams();
+          
+          if (filters.crimeType) params.append('jenis_kejahatan', filters.crimeType);
+          if (filters.year) params.append('tahun', filters.year);
+          if (filters.province) params.append('provinsi', filters.province);
+          
+          const url = `http://127.0.0.1:8000/api/cluster?${params}`;
+          
+          try {
+              const response = await fetch(url);
+              
+              if (!response.ok) {
+                  const error = await response.json();
+                  throw new Error(`${error.message}: ${error.detail}`);
+              }
+              
+              const data = await response.json();
+              return data;
+              
+          } catch (error) {
+              console.error('Clustering error:', error.message);
+              throw error;
+          }
+      }
+
+      // Example usage
+      getCrimeClusters({
+          crimeType: 'Tindak Pidana Korupsi',
+          year: 2023,
+          province: 'DKI JAKARTA'
+      }).then(result => {
+          console.log(`Found ${result.data.clusters.length} clusters`);
+          console.log(`Silhouette score: ${result.data.statistics.silhouette_score}`);
+          
+          result.data.clusters.forEach((cluster, index) => {
+              console.log(`Cluster ${index}: ${cluster.members} cases in ${cluster.locations.join(', ')}`);
+          });
+      }).catch(error => {
+          console.error('Failed to get clusters:', error);
+      });
+
+  - lang: javascript
+    label: JavaScript fetch - Display results
+    source: |
+      async function displayClusterResults() {
+          try {
+              const response = await fetch('http://127.0.0.1:8000/api/cluster?tahun=2023');
+              const data = await response.json();
+              
+              // Display summary
+              console.log('=== Cluster Analysis Summary ===');
+              console.log(`Total Cases: ${data.data.statistics.total_cases}`);
+              console.log(`Number of Clusters: ${data.data.statistics.total_clusters}`);
+              console.log(`Quality Score: ${data.data.statistics.silhouette_score.toFixed(3)}`);
+              console.log(`Processing Time: ${data.meta.processing_time_ms}ms`);
+              
+              // Display each cluster
+              console.log('\n=== Cluster Details ===');
+              data.data.clusters.forEach(cluster => {
+                  console.log(`\nCluster ${cluster.cluster_id}:`);
+                  console.log(`  Cases: ${cluster.members}`);
+                  console.log(`  Center: ${cluster.center.lat.toFixed(4)}, ${cluster.center.lng.toFixed(4)}`);
+                  console.log(`  Crime Types: ${cluster.crime_types.join(', ')}`);
+                  console.log(`  Locations: ${cluster.locations.join(', ')}`);
+              });
+              
+          } catch (error) {
+              console.error('Error:', error);
+          }
+      }
+
+      displayClusterResults();

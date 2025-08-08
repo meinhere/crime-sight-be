@@ -1,113 +1,170 @@
 openapi: 3.0.3
 info:
-  title: Crime Clustering Analysis API
-  description: API untuk analisis clustering kejahatan dan trend data putusan
+  title: Crime Sight Trend Analysis API
+  description: |
+    Crime trend analysis API for comprehensive crime data analysis and statistics.
+
+    ## Overview
+    This API provides comprehensive trend analysis of crime data including:
+    - Time series analysis by year
+    - Crime type trends and patterns
+    - Time of occurrence analysis
+    - Location-based crime trends
+    - Regional crime distribution
+    - Statistical analysis (highest, lowest, averages)
+
+    ## Features
+    - Flexible date range filtering
+    - Province-based regional analysis
+    - Dynamic wilayah analysis (provinces or kabupaten based on filter)
+    - Comprehensive statistics for all data dimensions
+    - Chart-ready data format
+
+    ## Base URL
+    `http://127.0.0.1:8000`
   version: 1.0.0
   contact:
-    name: API Support
-    email: support@crime-analysis.com
+    name: Crime Sight API Support
+    email: support@crimesight.com
 
 servers:
-  - url: http://localhost:3000
+  - url: http://127.0.0.1:8000
     description: Development server
-  - url: https://your-production-domain.com
-    description: Production server
+
+tags:
+  - name: trends
+    description: Crime trend analysis operations
 
 paths:
-  /api/analisis/trend:
+  /api/trends:
     get:
       tags:
-        - Analisis
-      summary: Get comprehensive crime trend analysis with statistics
-      description: Mendapatkan data trend kejahatan berdasarkan tahun, jenis kejahatan, waktu kejadian, lokasi kejadian, dan wilayah dengan statistik lengkap (tertinggi, terendah, rata-rata)
+        - trends
+      summary: Get comprehensive crime trend analysis
+      description: |
+        Get comprehensive crime trend analysis with statistics across multiple dimensions.
+
+        ## Analysis Dimensions
+        The API analyzes crime trends across:
+        - **Years**: Time series analysis from start_year to end_year
+        - **Crime Types**: Trends by jenis_kejahatan
+        - **Time of Occurrence**: Trends by waktu_kejadian
+        - **Location**: Trends by lokasi_kejadian
+        - **Regional**: Dynamic analysis based on province filter
+          - If no province filter: shows province-level data
+          - If province specified: shows kabupaten-level data within that province
+
+        ## Statistical Analysis
+        For each dimension, provides:
+        - Highest value with name and count
+        - Lowest value with name and count
+        - Average value across all categories
+
+        ## Data Format
+        Returns chart-ready datasets with labels and yearly data arrays suitable for:
+        - Line charts
+        - Bar charts
+        - Statistical dashboards
+        - Comparative analysis
+
+        ## Use Cases
+        - Annual crime trend reporting
+        - Regional crime pattern analysis
+        - Crime type comparative studies
+        - Time-based crime pattern identification
+        - Resource allocation planning
       parameters:
         - name: start_year
           in: query
-          description: Tahun mulai analisis
+          description: |
+            Starting year for trend analysis.
+
+            **Default:** Earliest year in database if not provided
+            **Range:** 2000-current year
+
+            **Usage:**
+            - Leave empty to start from earliest available data
+            - Specify to focus on recent trends
+            - Use with end_year for specific time periods
           required: false
           schema:
             type: integer
             minimum: 2000
             maximum: 2030
-            default: 2020
-            example: 2020
+          example: 2020
+
         - name: end_year
           in: query
-          description: Tahun akhir analisis
+          description: |
+            Ending year for trend analysis.
+
+            **Default:** Current year if not provided
+            **Range:** 2000-current year
+
+            **Usage:**
+            - Leave empty to include up to current year
+            - Specify to analyze historical periods
+            - Must be >= start_year
           required: false
           schema:
             type: integer
             minimum: 2000
             maximum: 2030
-            default: 2025
-            example: 2025
+          example: 2023
+
         - name: provinsi
           in: query
-          description: Filter berdasarkan kode provinsi
+          description: |
+            Province code filter for regional analysis.
+
+            **Effect on Results:**
+            - If empty: wilayah shows province-level aggregation
+            - If specified: wilayah shows kabupaten-level data within the province
+
+            **Format:** Province code (e.g., "31" for DKI Jakarta, "32" for Jawa Barat)
+
+            **Usage:**
+            - Leave empty for national-level provincial comparison
+            - Specify for detailed analysis within a province
           required: false
           schema:
             type: string
-            example: "35"
-            description: Kode provinsi (contoh 35 untuk Jawa Timur)
+          example: "32"
+
       responses:
         "200":
-          description: Successful response with comprehensive trend data and statistics
+          description: Comprehensive trend analysis with statistics
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  labels:
-                    type: array
-                    items:
-                      type: string
-                    description: Array tahun untuk label chart
-                    example: ["2020", "2021", "2022", "2023"]
-                  data:
-                    $ref: "#/components/schemas/ComprehensiveDatasets"
-                  meta:
-                    $ref: "#/components/schemas/ComprehensiveMeta"
+                $ref: "#/components/schemas/TrendResponse"
               examples:
-                all_data_no_filter:
-                  summary: All data without filters (shows provinces)
+                national_analysis:
+                  summary: National analysis without province filter
+                  description: Shows province-level regional data
                   value:
-                    labels: ["2020", "2021", "2022", "2023"]
-                    data:
-                      jenis_kejahatan:
-                        - label: "Korupsi"
-                          data: [12, 15, 20, 25]
-                        - label: "Pencurian"
-                          data: [8, 10, 12, 18]
-                      waktu_kejadian:
-                        - label: "Pagi"
-                          data: [5, 8, 10, 12]
-                        - label: "Siang"
-                          data: [7, 9, 11, 14]
-                      lokasi_kejadian:
-                        - label: "Kantor"
-                          data: [10, 12, 15, 18]
-                        - label: "Rumah"
-                          data: [5, 7, 8, 10]
-                      wilayah:
-                        - label: "Jawa Timur"
-                          data: [8, 12, 16, 20]
-                        - label: "Jawa Barat"
-                          data: [12, 13, 16, 20]
                     meta:
                       total_records: 156
+                      labels: ["2020", "2021", "2022", "2023"]
                       details:
                         jenis_kejahatan:
-                          Korupsi: 72
-                          Pencurian: 48
+                          "Tindak Pidana Korupsi": 72
+                          "Tindak Pidana Narkotika": 48
+                          "Tindak Pidana Pencucian Uang": 36
                         waktu_kejadian:
-                          Pagi: 35
-                          Siang: 41
+                          "Pagi": 35
+                          "Siang": 41
+                          "Malam": 29
+                          "Dini Hari": 51
                         lokasi_kejadian:
-                          Kantor: 55
-                          Rumah: 30
+                          "Kantor Pemerintahan": 55
+                          "Tempat Umum": 30
+                          "Rumah Pribadi": 25
+                          "Kantor Swasta": 46
                         wilayah:
-                          "Jawa Timur": 56
-                          "Jawa Barat": 61
+                          "DKI JAKARTA": 61
+                          "JAWA BARAT": 56
+                          "JAWA TENGAH": 39
                       statistics:
                         tahun:
                           tertinggi:
@@ -116,115 +173,116 @@ paths:
                           terendah:
                             tahun: "2020"
                             jumlah: 20
-                          rata_rata: 39.25
-                          data_tahun:
-                            - tahun: "2020"
-                              jumlah: 20
-                            - tahun: "2021"
-                              jumlah: 25
-                            - tahun: "2022"
-                              jumlah: 32
-                            - tahun: "2023"
-                              jumlah: 43
+                          rata_rata: 39.0
                         jenis_kejahatan:
                           tertinggi:
-                            jenis: "Korupsi"
+                            jenis: "Tindak Pidana Korupsi"
                             jumlah: 72
                           terendah:
-                            jenis: "Pencurian"
-                            jumlah: 48
-                          rata_rata: 60
+                            jenis: "Tindak Pidana Pencucian Uang"
+                            jumlah: 36
+                          rata_rata: 52.0
                         waktu_kejadian:
                           tertinggi:
-                            waktu: "Siang"
-                            jumlah: 41
+                            waktu: "Dini Hari"
+                            jumlah: 51
                           terendah:
-                            waktu: "Pagi"
-                            jumlah: 35
-                          rata_rata: 38
+                            waktu: "Malam"
+                            jumlah: 29
+                          rata_rata: 39.0
                         lokasi_kejadian:
                           tertinggi:
-                            lokasi: "Kantor"
+                            lokasi: "Kantor Pemerintahan"
                             jumlah: 55
                           terendah:
-                            lokasi: "Rumah"
-                            jumlah: 30
-                          rata_rata: 42.5
+                            lokasi: "Rumah Pribadi"
+                            jumlah: 25
+                          rata_rata: 39.0
                         wilayah:
                           tertinggi:
-                            wilayah: "Jawa Barat"
+                            wilayah: "DKI JAKARTA"
                             jumlah: 61
                           terendah:
-                            wilayah: "Jawa Timur"
-                            jumlah: 56
-                          rata_rata: 58.5
-                      filter:
+                            wilayah: "JAWA TENGAH"
+                            jumlah: 39
+                          rata_rata: 52.0
+                      filters:
                         provinsi: "Semua Provinsi"
                         tahun: "2020-2023"
-                specific_province:
-                  summary: Data for specific province (shows kabupaten)
-                  value:
-                    labels: ["2020", "2021", "2022", "2023"]
                     data:
+                      tahun: [20, 25, 32, 43]
                       jenis_kejahatan:
-                        - label: "Korupsi"
-                          data: [5, 8, 12, 15]
-                        - label: "Pencurian"
-                          data: [3, 5, 7, 10]
+                        - label: "Tindak Pidana Korupsi"
+                          data: [12, 15, 20, 25]
+                        - label: "Tindak Pidana Narkotika"
+                          data: [8, 10, 12, 18]
+                        - label: "Tindak Pidana Pencucian Uang"
+                          data: [0, 0, 0, 36]
                       waktu_kejadian:
                         - label: "Pagi"
-                          data: [2, 4, 6, 8]
+                          data: [5, 8, 10, 12]
                         - label: "Siang"
-                          data: [3, 5, 7, 9]
+                          data: [7, 9, 11, 14]
+                        - label: "Malam"
+                          data: [3, 4, 8, 14]
+                        - label: "Dini Hari"
+                          data: [5, 4, 3, 3]
                       lokasi_kejadian:
-                        - label: "Kantor"
-                          data: [4, 6, 8, 10]
-                        - label: "Rumah"
-                          data: [2, 3, 4, 5]
+                        - label: "Kantor Pemerintahan"
+                          data: [10, 12, 15, 18]
+                        - label: "Tempat Umum"
+                          data: [5, 7, 8, 10]
+                        - label: "Rumah Pribadi"
+                          data: [2, 3, 5, 15]
+                        - label: "Kantor Swasta"
+                          data: [3, 3, 4, 0]
                       wilayah:
-                        - label: "Pamekasan"
-                          data: [2, 3, 4, 5]
-                        - label: "Sumenep"
-                          data: [3, 4, 5, 6]
+                        - label: "DKI JAKARTA"
+                          data: [8, 12, 16, 25]
+                        - label: "JAWA BARAT"
+                          data: [12, 13, 16, 15]
+                        - label: "JAWA TENGAH"
+                          data: [0, 0, 0, 39]
+
+                provincial_analysis:
+                  summary: Provincial analysis with province filter
+                  description: Shows kabupaten-level data within specified province
+                  value:
                     meta:
                       total_records: 65
+                      labels: ["2020", "2021", "2022", "2023"]
                       details:
                         jenis_kejahatan:
-                          Korupsi: 40
-                          Pencurian: 25
+                          "Tindak Pidana Korupsi": 40
+                          "Tindak Pidana Narkotika": 25
                         waktu_kejadian:
-                          Pagi: 20
-                          Siang: 24
+                          "Pagi": 20
+                          "Siang": 24
+                          "Malam": 21
                         lokasi_kejadian:
-                          Kantor: 28
-                          Rumah: 14
+                          "Kantor Pemerintahan": 28
+                          "Tempat Umum": 14
+                          "Rumah Pribadi": 23
                         wilayah:
-                          Pamekasan: 14
-                          Sumenep: 18
+                          "Bandung": 18
+                          "Bekasi": 14
+                          "Bogor": 16
+                          "Depok": 17
                       statistics:
                         tahun:
                           tertinggi:
                             tahun: "2023"
-                            jumlah: 19
+                            jumlah: 25
                           terendah:
                             tahun: "2020"
-                            jumlah: 5
+                            jumlah: 8
                           rata_rata: 16.25
-                          data_tahun:
-                            - tahun: "2020"
-                              jumlah: 5
-                            - tahun: "2021"
-                              jumlah: 8
-                            - tahun: "2022"
-                              jumlah: 13
-                            - tahun: "2023"
-                              jumlah: 19
                         jenis_kejahatan:
                           tertinggi:
-                            jenis: "Korupsi"
+                            jenis: "Tindak Pidana Korupsi"
                             jumlah: 40
                           terendah:
-                            jenis: "Pencurian"
+                            jenis: "Tindak Pidana Narkotika"
                             jumlah: 25
                           rata_rata: 32.5
                         waktu_kejadian:
@@ -234,377 +292,604 @@ paths:
                           terendah:
                             waktu: "Pagi"
                             jumlah: 20
-                          rata_rata: 22
+                          rata_rata: 21.67
                         lokasi_kejadian:
                           tertinggi:
-                            lokasi: "Kantor"
+                            lokasi: "Kantor Pemerintahan"
                             jumlah: 28
                           terendah:
-                            lokasi: "Rumah"
+                            lokasi: "Tempat Umum"
                             jumlah: 14
-                          rata_rata: 21
+                          rata_rata: 21.67
                         wilayah:
                           tertinggi:
-                            wilayah: "Sumenep"
+                            wilayah: "Bandung"
                             jumlah: 18
                           terendah:
-                            wilayah: "Pamekasan"
+                            wilayah: "Bekasi"
                             jumlah: 14
-                          rata_rata: 16
-                      filter:
-                        provinsi: "35"
+                          rata_rata: 16.25
+                      filters:
+                        provinsi: "32"
                         tahun: "2020-2023"
+                    data:
+                      tahun: [8, 12, 20, 25]
+                      jenis_kejahatan:
+                        - label: "Tindak Pidana Korupsi"
+                          data: [5, 8, 12, 15]
+                        - label: "Tindak Pidana Narkotika"
+                          data: [3, 4, 8, 10]
+                      waktu_kejadian:
+                        - label: "Pagi"
+                          data: [2, 4, 6, 8]
+                        - label: "Siang"
+                          data: [3, 5, 7, 9]
+                        - label: "Malam"
+                          data: [3, 3, 7, 8]
+                      lokasi_kejadian:
+                        - label: "Kantor Pemerintahan"
+                          data: [4, 6, 8, 10]
+                        - label: "Tempat Umum"
+                          data: [2, 3, 4, 5]
+                        - label: "Rumah Pribadi"
+                          data: [2, 3, 8, 10]
+                      wilayah:
+                        - label: "Bandung"
+                          data: [2, 4, 5, 7]
+                        - label: "Bekasi"
+                          data: [2, 3, 4, 5]
+                        - label: "Bogor"
+                          data: [2, 3, 5, 6]
+                        - label: "Depok"
+                          data: [2, 2, 6, 7]
+
+        "404":
+          description: No data found for the given parameters
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                no_data:
+                  summary: No data found
+                  value:
+                    message: "Data tidak ditemukan"
+                    detail: "No crime data found for the specified filters"
+                    timestamp: "2024-01-15T10:30:00Z"
+                    path: "/api/trends"
+
         "500":
           description: Internal server error
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                server_error:
+                  summary: Server error
+                  value:
+                    message: "Internal server error"
+                    detail: "Error retrieving trend data: Database connection failed"
+                    timestamp: "2024-01-15T10:30:00Z"
+                    path: "/api/trends"
 
 components:
   schemas:
-    ComprehensiveDatasets:
+    TrendResponse:
       type: object
+      required:
+        - meta
+        - data
       properties:
-        jenis_kejahatan:
+        meta:
+          $ref: "#/components/schemas/TrendMeta"
+        data:
+          $ref: "#/components/schemas/TrendData"
+
+    TrendMeta:
+      type: object
+      required:
+        - total_records
+        - labels
+        - details
+        - statistics
+        - filters
+      properties:
+        total_records:
+          type: integer
+          description: Total number of crime records in the analysis period
+          minimum: 0
+          example: 156
+        labels:
           type: array
           items:
-            $ref: "#/components/schemas/TrendDataset"
-          description: Dataset untuk jenis kejahatan
-        waktu_kejadian:
-          type: array
-          items:
-            $ref: "#/components/schemas/TrendDataset"
-          description: Dataset untuk waktu kejadian
-        lokasi_kejadian:
-          type: array
-          items:
-            $ref: "#/components/schemas/TrendDataset"
-          description: Dataset untuk lokasi kejadian
-        wilayah:
-          type: array
-          items:
-            $ref: "#/components/schemas/TrendDataset"
-          description: Dataset untuk wilayah (provinsi atau kabupaten tergantung filter)
+            type: string
+          description: Array of year strings for chart labels
+          example: ["2020", "2021", "2022", "2023"]
+        details:
+          $ref: "#/components/schemas/TrendDetails"
+        statistics:
+          $ref: "#/components/schemas/TrendStatistics"
+        filters:
+          $ref: "#/components/schemas/TrendFilters"
+
+    TrendDetails:
+      type: object
       required:
         - jenis_kejahatan
         - waktu_kejadian
         - lokasi_kejadian
         - wilayah
+      properties:
+        jenis_kejahatan:
+          type: object
+          additionalProperties:
+            type: integer
+          description: Crime case counts by crime type
+          example:
+            "Tindak Pidana Korupsi": 72
+            "Tindak Pidana Narkotika": 48
+        waktu_kejadian:
+          type: object
+          additionalProperties:
+            type: integer
+          description: Crime case counts by time of occurrence
+          example:
+            "Pagi": 35
+            "Siang": 41
+        lokasi_kejadian:
+          type: object
+          additionalProperties:
+            type: integer
+          description: Crime case counts by location of occurrence
+          example:
+            "Kantor Pemerintahan": 55
+            "Tempat Umum": 30
+        wilayah:
+          type: object
+          additionalProperties:
+            type: integer
+          description: |
+            Crime case counts by region.
+            Shows provinces if no province filter, kabupaten if province filter applied.
+          example:
+            "DKI JAKARTA": 61
+            "JAWA BARAT": 56
+
+    TrendStatistics:
+      type: object
+      required:
+        - tahun
+        - jenis_kejahatan
+        - waktu_kejadian
+        - lokasi_kejadian
+        - wilayah
+      properties:
+        tahun:
+          $ref: "#/components/schemas/YearStatistics"
+        jenis_kejahatan:
+          $ref: "#/components/schemas/CategoryStatistics"
+        waktu_kejadian:
+          $ref: "#/components/schemas/CategoryStatistics"
+        lokasi_kejadian:
+          $ref: "#/components/schemas/CategoryStatistics"
+        wilayah:
+          $ref: "#/components/schemas/CategoryStatistics"
+
+    TrendFilters:
+      type: object
+      required:
+        - provinsi
+        - tahun
+      properties:
+        provinsi:
+          type: string
+          description: Applied province filter or "Semua Provinsi" if none
+          example: "Semua Provinsi"
+        tahun:
+          type: string
+          description: Year range analyzed
+          example: "2020-2023"
+
+    TrendData:
+      type: object
+      required:
+        - tahun
+        - jenis_kejahatan
+        - waktu_kejadian
+        - lokasi_kejadian
+        - wilayah
+      properties:
+        tahun:
+          type: array
+          items:
+            type: integer
+          description: Array of case counts per year (matches labels order)
+          example: [20, 25, 32, 43]
+        jenis_kejahatan:
+          type: array
+          items:
+            $ref: "#/components/schemas/TrendDataset"
+          description: Crime type trend datasets
+        waktu_kejadian:
+          type: array
+          items:
+            $ref: "#/components/schemas/TrendDataset"
+          description: Time of occurrence trend datasets
+        lokasi_kejadian:
+          type: array
+          items:
+            $ref: "#/components/schemas/TrendDataset"
+          description: Location of occurrence trend datasets
+        wilayah:
+          type: array
+          items:
+            $ref: "#/components/schemas/TrendDataset"
+          description: Regional trend datasets (provinces or kabupaten)
 
     TrendDataset:
       type: object
+      required:
+        - label
+        - data
       properties:
         label:
           type: string
-          description: Label untuk dataset
-          example: "Korupsi"
+          description: Dataset label (crime type, time, location, or region name)
+          example: "Tindak Pidana Korupsi"
         data:
           type: array
           items:
             type: integer
-          description: Array jumlah kasus per tahun
+          description: Array of case counts per year (matches labels order)
           example: [12, 15, 20, 25]
-      required:
-        - label
-        - data
-
-    ComprehensiveMeta:
-      type: object
-      properties:
-        total_records:
-          type: integer
-          description: Total records dalam periode yang dipilih
-          example: 156
-        details:
-          type: object
-          properties:
-            jenis_kejahatan:
-              type: object
-              additionalProperties:
-                type: integer
-              description: Breakdown kasus berdasarkan jenis kejahatan
-              example:
-                Korupsi: 72
-                Pencurian: 48
-            waktu_kejadian:
-              type: object
-              additionalProperties:
-                type: integer
-              description: Breakdown kasus berdasarkan waktu kejadian
-              example:
-                Pagi: 35
-                Siang: 41
-            lokasi_kejadian:
-              type: object
-              additionalProperties:
-                type: integer
-              description: Breakdown kasus berdasarkan lokasi kejadian
-              example:
-                Kantor: 55
-                Rumah: 30
-            wilayah:
-              type: object
-              additionalProperties:
-                type: integer
-              description: Breakdown kasus berdasarkan wilayah
-              example:
-                "Jawa Timur": 56
-                "Jawa Barat": 61
-          required:
-            - jenis_kejahatan
-            - waktu_kejadian
-            - lokasi_kejadian
-            - wilayah
-        statistics:
-          type: object
-          properties:
-            tahun:
-              $ref: "#/components/schemas/YearStatistics"
-            jenis_kejahatan:
-              $ref: "#/components/schemas/CrimeTypeStatistics"
-            waktu_kejadian:
-              $ref: "#/components/schemas/TimeStatistics"
-            lokasi_kejadian:
-              $ref: "#/components/schemas/LocationStatistics"
-            wilayah:
-              $ref: "#/components/schemas/RegionStatistics"
-          required:
-            - tahun
-            - jenis_kejahatan
-            - waktu_kejadian
-            - lokasi_kejadian
-            - wilayah
-        filter:
-          type: object
-          properties:
-            provinsi:
-              type: string
-              description: Filter provinsi yang diterapkan
-              example: "Semua Provinsi"
-            tahun:
-              type: string
-              description: Range tahun yang dianalisis
-              example: "2020-2023"
-          required:
-            - provinsi
-            - tahun
-      required:
-        - total_records
-        - details
-        - statistics
-        - filter
 
     YearStatistics:
       type: object
+      required:
+        - tertinggi
+        - terendah
+        - rata_rata
       properties:
         tertinggi:
           type: object
+          required:
+            - tahun
+            - jumlah
           properties:
             tahun:
               type: string
+              description: Year with highest crime count
               example: "2023"
             jumlah:
               type: integer
+              description: Highest crime count
               example: 43
+        terendah:
+          type: object
           required:
             - tahun
             - jumlah
-        terendah:
-          type: object
           properties:
             tahun:
               type: string
+              description: Year with lowest crime count
               example: "2020"
             jumlah:
               type: integer
+              description: Lowest crime count
               example: 20
-          required:
-            - tahun
-            - jumlah
         rata_rata:
           type: number
           format: float
-          example: 39.25
-        data_tahun:
-          type: array
-          items:
-            type: object
-            properties:
-              tahun:
-                type: string
-                example: "2020"
-              jumlah:
-                type: integer
-                example: 20
-            required:
-              - tahun
-              - jumlah
+          description: Average cases per year
+          example: 39.0
+
+    CategoryStatistics:
+      type: object
       required:
         - tertinggi
         - terendah
         - rata_rata
-        - data_tahun
-
-    CrimeTypeStatistics:
-      type: object
       properties:
         tertinggi:
           type: object
-          properties:
-            jenis:
-              type: string
-              example: "Korupsi"
-            jumlah:
-              type: integer
-              example: 72
-          required:
-            - jenis
-            - jumlah
+          description: Category with highest count
+          additionalProperties: true
+          example:
+            jenis: "Tindak Pidana Korupsi"
+            jumlah: 72
         terendah:
           type: object
-          properties:
-            jenis:
-              type: string
-              example: "Pencurian"
-            jumlah:
-              type: integer
-              example: 48
-          required:
-            - jenis
-            - jumlah
+          description: Category with lowest count
+          additionalProperties: true
+          example:
+            jenis: "Tindak Pidana Pencucian Uang"
+            jumlah: 36
         rata_rata:
           type: number
           format: float
-          example: 60
-      required:
-        - tertinggi
-        - terendah
-        - rata_rata
-
-    TimeStatistics:
-      type: object
-      properties:
-        tertinggi:
-          type: object
-          properties:
-            waktu:
-              type: string
-              example: "Siang"
-            jumlah:
-              type: integer
-              example: 41
-          required:
-            - waktu
-            - jumlah
-        terendah:
-          type: object
-          properties:
-            waktu:
-              type: string
-              example: "Pagi"
-            jumlah:
-              type: integer
-              example: 35
-          required:
-            - waktu
-            - jumlah
-        rata_rata:
-          type: number
-          format: float
-          example: 38
-      required:
-        - tertinggi
-        - terendah
-        - rata_rata
-
-    LocationStatistics:
-      type: object
-      properties:
-        tertinggi:
-          type: object
-          properties:
-            lokasi:
-              type: string
-              example: "Kantor"
-            jumlah:
-              type: integer
-              example: 55
-          required:
-            - lokasi
-            - jumlah
-        terendah:
-          type: object
-          properties:
-            lokasi:
-              type: string
-              example: "Rumah"
-            jumlah:
-              type: integer
-              example: 30
-          required:
-            - lokasi
-            - jumlah
-        rata_rata:
-          type: number
-          format: float
-          example: 42.5
-      required:
-        - tertinggi
-        - terendah
-        - rata_rata
-
-    RegionStatistics:
-      type: object
-      properties:
-        tertinggi:
-          type: object
-          properties:
-            wilayah:
-              type: string
-              example: "Jawa Barat"
-            jumlah:
-              type: integer
-              example: 61
-          required:
-            - wilayah
-            - jumlah
-        terendah:
-          type: object
-          properties:
-            wilayah:
-              type: string
-              example: "Jawa Timur"
-            jumlah:
-              type: integer
-              example: 56
-          required:
-            - wilayah
-            - jumlah
-        rata_rata:
-          type: number
-          format: float
-          example: 58.5
-      required:
-        - tertinggi
-        - terendah
-        - rata_rata
+          description: Average count across all categories
+          example: 52.0
 
     ErrorResponse:
       type: object
+      required:
+        - message
+        - detail
+        - timestamp
+        - path
       properties:
-        error:
-          type: string
-          description: Error message
-          example: "Terjadi kesalahan server"
         message:
           type: string
-          description: Detailed error message
-          example: "Internal server error"
-      required:
-        - error
-        - message
+          description: Human-readable error message
+          example: "Data tidak ditemukan"
+        detail:
+          type: string
+          description: Detailed technical error information
+          example: "No crime data found for the specified filters"
+        timestamp:
+          type: string
+          format: date-time
+          description: When the error occurred (ISO 8601 format)
+          example: "2024-01-15T10:30:00Z"
+        path:
+          type: string
+          description: API endpoint that generated the error
+          example: "/api/trends"
 
-tags:
-  - name: Analisis
-    description: Endpoints untuk analisis data kejahatan
+externalDocs:
+  description: Crime Sight Trend Analysis Documentation
+  url: https://docs.crimesight.com/trends
+
+x-code-samples:
+  - lang: curl
+    label: Basic trend analysis
+    source: |
+      curl -X GET "http://127.0.0.1:8000/api/trends" \
+           -H "Content-Type: application/json"
+
+  - lang: curl
+    label: Trend analysis with date range
+    source: |
+      curl -X GET "http://127.0.0.1:8000/api/trends?start_year=2020&end_year=2023" \
+           -H "Content-Type: application/json"
+
+  - lang: curl
+    label: Provincial trend analysis
+    source: |
+      curl -X GET "http://127.0.0.1:8000/api/trends?provinsi=32&start_year=2021&end_year=2023" \
+           -H "Content-Type: application/json"
+
+  - lang: python
+    label: Python requests - Basic analysis
+    source: |
+      import requests
+      import json
+
+      url = "http://127.0.0.1:8000/api/trends"
+
+      response = requests.get(url)
+
+      if response.status_code == 200:
+          data = response.json()
+          
+          print("=== Trend Analysis Summary ===")
+          print(f"Total Records: {data['meta']['total_records']}")
+          print(f"Year Range: {data['meta']['filters']['tahun']}")
+          print(f"Province Filter: {data['meta']['filters']['provinsi']}")
+          
+          # Year statistics
+          year_stats = data['meta']['statistics']['tahun']
+          print(f"\nYear with most crimes: {year_stats['tertinggi']['tahun']} ({year_stats['tertinggi']['jumlah']} cases)")
+          print(f"Year with least crimes: {year_stats['terendah']['tahun']} ({year_stats['terendah']['jumlah']} cases)")
+          print(f"Average per year: {year_stats['rata_rata']:.1f} cases")
+          
+          # Crime type statistics
+          crime_stats = data['meta']['statistics']['jenis_kejahatan']
+          print(f"\nMost common crime: {crime_stats['tertinggi']['jenis']} ({crime_stats['tertinggi']['jumlah']} cases)")
+          print(f"Least common crime: {crime_stats['terendah']['jenis']} ({crime_stats['terendah']['jumlah']} cases)")
+          
+      else:
+          error = response.json()
+          print(f"Error: {error['message']} - {error['detail']}")
+
+  - lang: python
+    label: Python requests - Provincial analysis
+    source: |
+      import requests
+      from datetime import datetime
+
+      def analyze_provincial_trends(province_code, start_year=None, end_year=None):
+          url = "http://127.0.0.1:8000/api/trends"
+          params = {}
+          
+          if province_code:
+              params['provinsi'] = province_code
+          if start_year:
+              params['start_year'] = start_year
+          if end_year:
+              params['end_year'] = end_year
+          
+          response = requests.get(url, params=params)
+          
+          if response.status_code == 200:
+              data = response.json()
+              
+              print(f"=== Provincial Analysis: {data['meta']['filters']['provinsi']} ===")
+              print(f"Period: {data['meta']['filters']['tahun']}")
+              print(f"Total Cases: {data['meta']['total_records']}")
+              
+              # Regional breakdown
+              print(f"\n=== Regional Distribution ===")
+              wilayah_details = data['meta']['details']['wilayah']
+              for region, count in sorted(wilayah_details.items(), key=lambda x: x[1], reverse=True):
+                  print(f"{region}: {count} cases")
+              
+              # Crime trends over time
+              print(f"\n=== Yearly Trends ===")
+              yearly_data = data['data']['tahun']
+              labels = data['meta']['labels']
+              for i, count in enumerate(yearly_data):
+                  print(f"{labels[i]}: {count} cases")
+              
+              return data
+          else:
+              raise Exception(f"API Error: {response.json()['detail']}")
+
+      # Example usage
+      try:
+          # Analyze West Java province (code 32) from 2020-2023
+          result = analyze_provincial_trends('32', 2020, 2023)
+          
+          # Access specific crime type trends
+          crime_trends = result['data']['jenis_kejahatan']
+          for crime_trend in crime_trends:
+              print(f"\n{crime_trend['label']}: {crime_trend['data']}")
+              
+      except Exception as e:
+          print(f"Error: {e}")
+
+  - lang: javascript
+    label: JavaScript fetch - Trend visualization
+    source: |
+      async function getTrendData(filters = {}) {
+          const params = new URLSearchParams();
+          
+          if (filters.startYear) params.append('start_year', filters.startYear);
+          if (filters.endYear) params.append('end_year', filters.endYear);
+          if (filters.provinsi) params.append('provinsi', filters.provinsi);
+          
+          const url = `http://127.0.0.1:8000/api/trends?${params}`;
+          
+          try {
+              const response = await fetch(url);
+              
+              if (!response.ok) {
+                  const error = await response.json();
+                  throw new Error(`${error.message}: ${error.detail}`);
+              }
+              
+              const data = await response.json();
+              return data;
+              
+          } catch (error) {
+              console.error('Trend analysis error:', error.message);
+              throw error;
+          }
+      }
+
+      // Example: Create chart data for crime types
+      async function createCrimeTypeChart() {
+          try {
+              const trendData = await getTrendData({
+                  startYear: 2020,
+                  endYear: 2023,
+                  provinsi: '31' // DKI Jakarta
+              });
+              
+              const chartConfig = {
+                  type: 'line',
+                  data: {
+                      labels: trendData.meta.labels,
+                      datasets: trendData.data.jenis_kejahatan.map((dataset, index) => ({
+                          label: dataset.label,
+                          data: dataset.data,
+                          borderColor: `hsl(${index * 60}, 70%, 50%)`,
+                          backgroundColor: `hsla(${index * 60}, 70%, 50%, 0.1)`,
+                          tension: 0.4
+                      }))
+                  },
+                  options: {
+                      responsive: true,
+                      plugins: {
+                          title: {
+                              display: true,
+                              text: `Crime Type Trends - ${trendData.meta.filters.provinsi} (${trendData.meta.filters.tahun})`
+                          }
+                      },
+                      scales: {
+                          y: {
+                              beginAtZero: true,
+                              title: {
+                                  display: true,
+                                  text: 'Number of Cases'
+                              }
+                          }
+                      }
+                  }
+              };
+              
+              console.log('Chart configuration ready:', chartConfig);
+              return chartConfig;
+              
+          } catch (error) {
+              console.error('Failed to create chart:', error);
+          }
+      }
+
+      // Usage
+      createCrimeTypeChart();
+
+  - lang: javascript
+    label: JavaScript fetch - Statistics dashboard
+    source: |
+      class TrendAnalyticsDashboard {
+          constructor(apiBaseUrl = 'http://127.0.0.1:8000') {
+              this.apiUrl = `${apiBaseUrl}/api/trends`;
+          }
+          
+          async loadAnalytics(filters = {}) {
+              const data = await getTrendData(filters);
+              this.displaySummaryStats(data.meta);
+              this.displayTrendCharts(data);
+              return data;
+          }
+          
+          displaySummaryStats(meta) {
+              console.log('=== Crime Analytics Dashboard ===');
+              console.log(`📊 Total Records: ${meta.total_records.toLocaleString()}`);
+              console.log(`📅 Period: ${meta.filters.tahun}`);
+              console.log(`🗺️  Region: ${meta.filters.provinsi}`);
+              
+              // Year insights
+              const yearStats = meta.statistics.tahun;
+              console.log(`\n📈 Peak Year: ${yearStats.tertinggi.tahun} (${yearStats.tertinggi.jumlah} cases)`);
+              console.log(`📉 Low Year: ${yearStats.terendah.tahun} (${yearStats.terendah.jumlah} cases)`);
+              console.log(`📊 Average: ${yearStats.rata_rata.toFixed(1)} cases/year`);
+              
+              // Crime type insights
+              const crimeStats = meta.statistics.jenis_kejahatan;
+              console.log(`\n🚨 Top Crime: ${crimeStats.tertinggi.jenis} (${crimeStats.tertinggi.jumlah} cases)`);
+              console.log(`🔽 Lowest Crime: ${crimeStats.terendah.jenis} (${crimeStats.terendah.jumlah} cases)`);
+              
+              // Regional insights
+              const regionStats = meta.statistics.wilayah;
+              console.log(`\n🏘️  Top Region: ${regionStats.tertinggi.wilayah} (${regionStats.tertinggi.jumlah} cases)`);
+              console.log(`🔽 Lowest Region: ${regionStats.terendah.wilayah} (${regionStats.terendah.jumlah} cases)`);
+          }
+          
+          displayTrendCharts(data) {
+              console.log('\n=== Available Chart Data ===');
+              console.log(`📊 Crime Types: ${data.data.jenis_kejahatan.length} categories`);
+              console.log(`⏰ Time Patterns: ${data.data.waktu_kejadian.length} time periods`);
+              console.log(`📍 Locations: ${data.data.lokasi_kejadian.length} location types`);
+              console.log(`🗺️  Regions: ${data.data.wilayah.length} regions`);
+              
+              // Show top trends
+              data.data.jenis_kejahatan.forEach(trend => {
+                  const total = trend.data.reduce((sum, val) => sum + val, 0);
+                  const direction = trend.data[trend.data.length - 1] > trend.data[0] ? '📈' : '📉';
+                  console.log(`${direction} ${trend.label}: ${total} total cases`);
+              });
+          }
+      }
+
+      // Usage
+      const dashboard = new TrendAnalyticsDashboard();
+
+      // Load national trends for last 3 years
+      dashboard.loadAnalytics({
+          startYear: new Date().getFullYear() - 3,
+          endYear: new Date().getFullYear()
+      });

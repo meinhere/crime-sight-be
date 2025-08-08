@@ -1,5 +1,4 @@
-from typing import Optional, Dict, List, Any
-import re
+from typing import Optional, Dict, Any
 from ..db.database import supabase
     
 def search_cases(
@@ -119,10 +118,7 @@ def search_cases(
                 "total_pages": total_pages,
                 "has_next": offset + limit < total_count,
                 "has_prev": offset > 0,
-                "search_query": query,
-                "filters_applied": {
-                    "text_search": bool(query and query.strip()),
-                }
+                "search_query": query
             }
         }
     
@@ -245,69 +241,3 @@ def get_putusan_detail(nomor_putusan: str) -> Dict[str, Any]:
         # if e.code != '42703':
         print(f"Error getting putusan detail for {nomor_putusan}: {str(e)}")
         return {"pihak_terlibat": {}}
-
-def get_person_roles(person_name: str, pihak_terlibat: Dict) -> List[str]:
-    """
-    Get all roles a person has in a case.
-    
-    Args:
-        person_name: Name to search for
-        pihak_terlibat: Dictionary of involved parties
-        
-    Returns:
-        List of roles the person has
-    """
-    roles = []
-    person_lower = person_name.lower()
-    
-    for role, people in pihak_terlibat.items():
-        if isinstance(people, list):
-            for person in people:
-                if person_lower in person.lower():
-                    roles.append(role)
-                    break
-    
-    return roles
-
-def format_currency(amount: Any) -> str:
-    """Format currency amount to readable string."""
-    if not amount:
-        return ""
-    
-    try:
-        if isinstance(amount, str):
-            # Extract numbers from string
-            numbers = re.findall(r'\d+(?:\.\d+)?', amount)
-            if numbers:
-                amount = float(numbers[0])
-            else:
-                return amount
-        
-        if isinstance(amount, (int, float)):
-            if amount >= 1_000_000_000:  # Billion
-                return f"{amount/1_000_000_000:.1f} miliar Rupiah"
-            elif amount >= 1_000_000:  # Million
-                return f"{amount/1_000_000:.1f} juta Rupiah"
-            elif amount >= 1_000:  # Thousand
-                return f"{amount/1_000:.1f} ribu Rupiah"
-            else:
-                return f"{amount:,.0f} Rupiah"
-        
-        return str(amount)
-    except:
-        return str(amount) if amount else ""
-
-def parse_person_list(person_data: Any) -> List[str]:
-    """Parse person data into list of names."""
-    if not person_data:
-        return []
-    
-    if isinstance(person_data, str):
-        # Split by common separators
-        names = re.split(r'[,;]|\s+dan\s+|\s+&\s+', person_data)
-        return [name.strip() for name in names if name.strip()]
-    
-    if isinstance(person_data, list):
-        return [str(item).strip() for item in person_data if str(item).strip()]
-    
-    return [str(person_data).strip()]
